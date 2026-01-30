@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 export default function Navbar() {
@@ -16,8 +17,15 @@ export default function Navbar() {
     <nav className="bg-white shadow-sm border-b border-gray-200">
       <div className="max-w-6xl mx-auto px-4 md:px-8">
         <div className="flex items-center justify-between h-16">
-          <Link href="/" className="text-xl font-bold text-blue-600">
-            Expense Tracker
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/expense.png"
+              alt="Expense Tracker"
+              width={150}
+              height={50}
+              className="h-12 w-auto"
+              priority
+            />
           </Link>
           <div className="flex space-x-1">
             {navItems.map((item) => (

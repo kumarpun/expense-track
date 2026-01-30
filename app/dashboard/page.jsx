@@ -87,6 +87,7 @@ export default function Dashboard() {
     amount: "",
     reason: "",
   });
+  const [isStatsExpanded, setIsStatsExpanded] = useState(false);
 
   const fetchExpenses = async () => {
     try {
@@ -278,46 +279,109 @@ export default function Dashboard() {
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-white rounded-lg shadow p-4">
-            <p className="text-sm text-gray-500">Today</p>
-            <p className="text-2xl font-bold text-gray-800">
-              रू {stats.todayTotal.toLocaleString()}
-            </p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4">
-            <h3 className="font-semibold text-gray-700 mb-2">Week</h3>
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-xs text-gray-500">Last</p>
-                <p className="text-lg font-bold text-gray-600">
-                  रू {stats.lastWeekTotal.toLocaleString()}
-                </p>
-              </div>
-              <div className="text-xl text-gray-300">→</div>
-              <div>
-                <p className="text-xs text-gray-500">This</p>
-                <p className="text-lg font-bold text-gray-800">
-                  रू {stats.thisWeekTotal.toLocaleString()}
-                </p>
+        <div className="mb-6">
+          {/* Mobile View - Collapsible */}
+          <div className="md:hidden">
+            <div
+              className="bg-white rounded-lg shadow p-4 cursor-pointer"
+              onClick={() => setIsStatsExpanded(!isStatsExpanded)}
+            >
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm text-gray-500">Today</p>
+                  <p className="text-2xl font-bold text-gray-800">
+                    रू {stats.todayTotal.toLocaleString()}
+                  </p>
+                </div>
+                <button className="text-gray-400 text-xl">
+                  {isStatsExpanded ? "▲" : "▼"}
+                </button>
               </div>
             </div>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4">
-            <h3 className="font-semibold text-gray-700 mb-2">Month</h3>
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-xs text-gray-500">Last</p>
-                <p className="text-lg font-bold text-gray-600">
-                  रू {stats.lastMonthTotal.toLocaleString()}
-                </p>
+            {isStatsExpanded && (
+              <div className="grid grid-cols-1 gap-4 mt-4">
+                <div className="bg-white rounded-lg shadow p-4">
+                  <h3 className="font-semibold text-gray-700 mb-2">Week</h3>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-xs text-gray-500">Last</p>
+                      <p className="text-lg font-bold text-gray-600">
+                        रू {stats.lastWeekTotal.toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="text-xl text-gray-300">→</div>
+                    <div>
+                      <p className="text-xs text-gray-500">This</p>
+                      <p className="text-lg font-bold text-gray-800">
+                        रू {stats.thisWeekTotal.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-white rounded-lg shadow p-4">
+                  <h3 className="font-semibold text-gray-700 mb-2">Month</h3>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-xs text-gray-500">Last</p>
+                      <p className="text-lg font-bold text-gray-600">
+                        रू {stats.lastMonthTotal.toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="text-xl text-gray-300">→</div>
+                    <div>
+                      <p className="text-xs text-gray-500">This</p>
+                      <p className="text-lg font-bold text-gray-800">
+                        रू {stats.thisMonthTotal.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="text-xl text-gray-300">→</div>
-              <div>
-                <p className="text-xs text-gray-500">This</p>
-                <p className="text-lg font-bold text-gray-800">
-                  रू {stats.thisMonthTotal.toLocaleString()}
-                </p>
+            )}
+          </div>
+
+          {/* Desktop View - Always show all */}
+          <div className="hidden md:grid md:grid-cols-3 gap-4">
+            <div className="bg-white rounded-lg shadow p-4">
+              <p className="text-sm text-gray-500">Today</p>
+              <p className="text-2xl font-bold text-gray-800">
+                रू {stats.todayTotal.toLocaleString()}
+              </p>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4">
+              <h3 className="font-semibold text-gray-700 mb-2">Week</h3>
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-xs text-gray-500">Last</p>
+                  <p className="text-lg font-bold text-gray-600">
+                    रू {stats.lastWeekTotal.toLocaleString()}
+                  </p>
+                </div>
+                <div className="text-xl text-gray-300">→</div>
+                <div>
+                  <p className="text-xs text-gray-500">This</p>
+                  <p className="text-lg font-bold text-gray-800">
+                    रू {stats.thisWeekTotal.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4">
+              <h3 className="font-semibold text-gray-700 mb-2">Month</h3>
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-xs text-gray-500">Last</p>
+                  <p className="text-lg font-bold text-gray-600">
+                    रू {stats.lastMonthTotal.toLocaleString()}
+                  </p>
+                </div>
+                <div className="text-xl text-gray-300">→</div>
+                <div>
+                  <p className="text-xs text-gray-500">This</p>
+                  <p className="text-lg font-bold text-gray-800">
+                    रू {stats.thisMonthTotal.toLocaleString()}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
