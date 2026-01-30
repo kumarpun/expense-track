@@ -10,6 +10,7 @@ export default function SavingPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [editingSaving, setEditingSaving] = useState(null);
+  const [isStatsExpanded, setIsStatsExpanded] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     amount: "",
@@ -188,62 +189,139 @@ export default function SavingPage() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-lg shadow p-4">
-            <p className="text-xs text-gray-500">Total Deposits</p>
-            {isLoading ? (
-              <div className="h-7 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
-            ) : (
-              <p className="text-xl font-bold text-green-600">
-                रू {totalSavings.toLocaleString()}
-              </p>
+        <div className="mb-6">
+          {/* Mobile View - Collapsible */}
+          <div className="md:hidden">
+            <div
+              className="bg-white rounded-lg shadow p-4 cursor-pointer"
+              onClick={() => setIsStatsExpanded(!isStatsExpanded)}
+            >
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-xs text-gray-500">Total Deposits</p>
+                  {isLoading ? (
+                    <div className="h-7 w-24 bg-gray-200 animate-pulse rounded mt-1"></div>
+                  ) : (
+                    <p className="text-xl font-bold text-green-600">
+                      रू {totalSavings.toLocaleString()}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-400">{isLoading ? "-" : `${savings.length} deposits`}</p>
+                </div>
+                <button className="text-gray-400 text-xl">
+                  {isStatsExpanded ? "▲" : "▼"}
+                </button>
+              </div>
+            </div>
+            {isStatsExpanded && (
+              <div className="grid grid-cols-3 gap-2 mt-4">
+                <div className="bg-white rounded-lg shadow p-3">
+                  <p className="text-xs text-gray-500">Total Expenses</p>
+                  {isLoading ? (
+                    <div className="h-6 w-16 bg-gray-200 animate-pulse rounded mt-1"></div>
+                  ) : (
+                    <p className="text-lg font-bold text-red-600">
+                      रू {stats.totalExpenses.toLocaleString()}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-400">{isLoading ? "-" : `${expenses.length} expenses`}</p>
+                </div>
+                <div className="bg-white rounded-lg shadow p-3">
+                  <p className="text-xs text-gray-500">Today</p>
+                  {isLoading ? (
+                    <div className="h-6 w-16 bg-gray-200 animate-pulse rounded mt-1"></div>
+                  ) : (
+                    <p
+                      className={`text-lg font-bold ${
+                        stats.todayNet >= 0 ? "text-green-600" : "text-red-600"
+                      }`}
+                    >
+                      {stats.todayNet >= 0 ? "+" : ""}रू {stats.todayNet.toLocaleString()}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-400">
+                    {isLoading ? "-" : `+${stats.todaySavings.toLocaleString()} / -${stats.todayExpenses.toLocaleString()}`}
+                  </p>
+                </div>
+                <div className="bg-white rounded-lg shadow p-3">
+                  <p className="text-xs text-gray-500">This Month</p>
+                  {isLoading ? (
+                    <div className="h-6 w-16 bg-gray-200 animate-pulse rounded mt-1"></div>
+                  ) : (
+                    <p
+                      className={`text-lg font-bold ${
+                        stats.thisMonthNet >= 0 ? "text-green-600" : "text-red-600"
+                      }`}
+                    >
+                      {stats.thisMonthNet >= 0 ? "+" : ""}रू {stats.thisMonthNet.toLocaleString()}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-400">
+                    {isLoading ? "-" : `+${stats.thisMonthSavings.toLocaleString()} / -${stats.thisMonthExpenses.toLocaleString()}`}
+                  </p>
+                </div>
+              </div>
             )}
-            <p className="text-xs text-gray-400">{isLoading ? "-" : `${savings.length} deposits`}</p>
           </div>
-          <div className="bg-white rounded-lg shadow p-4">
-            <p className="text-xs text-gray-500">Total Expenses</p>
-            {isLoading ? (
-              <div className="h-7 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
-            ) : (
-              <p className="text-xl font-bold text-red-600">
-                रू {stats.totalExpenses.toLocaleString()}
+
+          {/* Desktop View - Always show all */}
+          <div className="hidden md:grid md:grid-cols-4 gap-4">
+            <div className="bg-white rounded-lg shadow p-4">
+              <p className="text-xs text-gray-500">Total Deposits</p>
+              {isLoading ? (
+                <div className="h-7 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
+              ) : (
+                <p className="text-xl font-bold text-green-600">
+                  रू {totalSavings.toLocaleString()}
+                </p>
+              )}
+              <p className="text-xs text-gray-400">{isLoading ? "-" : `${savings.length} deposits`}</p>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4">
+              <p className="text-xs text-gray-500">Total Expenses</p>
+              {isLoading ? (
+                <div className="h-7 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
+              ) : (
+                <p className="text-xl font-bold text-red-600">
+                  रू {stats.totalExpenses.toLocaleString()}
+                </p>
+              )}
+              <p className="text-xs text-gray-400">{isLoading ? "-" : `${expenses.length} expenses`}</p>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4">
+              <p className="text-xs text-gray-500">Today's Activity</p>
+              {isLoading ? (
+                <div className="h-7 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
+              ) : (
+                <p
+                  className={`text-xl font-bold ${
+                    stats.todayNet >= 0 ? "text-green-600" : "text-red-600"
+                  }`}
+                >
+                  {stats.todayNet >= 0 ? "+" : ""}रू {stats.todayNet.toLocaleString()}
+                </p>
+              )}
+              <p className="text-xs text-gray-400">
+                {isLoading ? "-" : `+${stats.todaySavings.toLocaleString()} / -${stats.todayExpenses.toLocaleString()}`}
               </p>
-            )}
-            <p className="text-xs text-gray-400">{isLoading ? "-" : `${expenses.length} expenses`}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4">
-            <p className="text-xs text-gray-500">Today's Activity</p>
-            {isLoading ? (
-              <div className="h-7 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
-            ) : (
-              <p
-                className={`text-xl font-bold ${
-                  stats.todayNet >= 0 ? "text-green-600" : "text-red-600"
-                }`}
-              >
-                {stats.todayNet >= 0 ? "+" : ""}रू {stats.todayNet.toLocaleString()}
+            </div>
+            <div className="bg-white rounded-lg shadow p-4">
+              <p className="text-xs text-gray-500">This Month</p>
+              {isLoading ? (
+                <div className="h-7 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
+              ) : (
+                <p
+                  className={`text-xl font-bold ${
+                    stats.thisMonthNet >= 0 ? "text-green-600" : "text-red-600"
+                  }`}
+                >
+                  {stats.thisMonthNet >= 0 ? "+" : ""}रू {stats.thisMonthNet.toLocaleString()}
+                </p>
+              )}
+              <p className="text-xs text-gray-400">
+                {isLoading ? "-" : `+${stats.thisMonthSavings.toLocaleString()} / -${stats.thisMonthExpenses.toLocaleString()}`}
               </p>
-            )}
-            <p className="text-xs text-gray-400">
-              {isLoading ? "-" : `+${stats.todaySavings.toLocaleString()} / -${stats.todayExpenses.toLocaleString()}`}
-            </p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4">
-            <p className="text-xs text-gray-500">This Month</p>
-            {isLoading ? (
-              <div className="h-7 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
-            ) : (
-              <p
-                className={`text-xl font-bold ${
-                  stats.thisMonthNet >= 0 ? "text-green-600" : "text-red-600"
-                }`}
-              >
-                {stats.thisMonthNet >= 0 ? "+" : ""}रू {stats.thisMonthNet.toLocaleString()}
-              </p>
-            )}
-            <p className="text-xs text-gray-400">
-              {isLoading ? "-" : `+${stats.thisMonthSavings.toLocaleString()} / -${stats.thisMonthExpenses.toLocaleString()}`}
-            </p>
+            </div>
           </div>
         </div>
 

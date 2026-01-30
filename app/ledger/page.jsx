@@ -17,14 +17,13 @@ export default function LedgerPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLedger, setEditingLedger] = useState(null);
   const [activeTab, setActiveTab] = useState("loan_given");
+  const [isStatsExpanded, setIsStatsExpanded] = useState(false);
   const [formData, setFormData] = useState({
     type: "loan_given",
     title: "",
     amount: "",
     personName: "",
     interestRate: "",
-    startDate: new Date().toISOString().split("T")[0],
-    dueDate: "",
     notes: "",
   });
 
@@ -59,8 +58,6 @@ export default function LedgerPage() {
       amount: "",
       personName: "",
       interestRate: "",
-      startDate: new Date().toISOString().split("T")[0],
-      dueDate: "",
       notes: "",
     });
     setIsModalOpen(true);
@@ -74,12 +71,6 @@ export default function LedgerPage() {
       amount: ledger.amount,
       personName: ledger.personName || "",
       interestRate: ledger.interestRate || "",
-      startDate: ledger.startDate
-        ? new Date(ledger.startDate).toISOString().split("T")[0]
-        : "",
-      dueDate: ledger.dueDate
-        ? new Date(ledger.dueDate).toISOString().split("T")[0]
-        : "",
       notes: ledger.notes || "",
       status: ledger.status,
       paidAmount: ledger.paidAmount || 0,
@@ -187,45 +178,105 @@ export default function LedgerPage() {
       <div className="min-h-screen bg-gray-100 p-4 md:p-8" suppressHydrationWarning>
         <div className="max-w-6xl mx-auto" suppressHydrationWarning>
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="bg-white rounded-lg shadow p-4">
-              <p className="text-xs text-gray-500">Money to Receive</p>
-              {isLoading ? (
-                <div className="h-7 w-24 bg-gray-200 animate-pulse rounded mt-1"></div>
-              ) : (
-                <p className="text-xl font-bold text-blue-600">
-                  रू {stats.totalLoansGiven.toLocaleString()}
-                </p>
+          <div className="mb-6">
+            {/* Mobile View - Collapsible */}
+            <div className="md:hidden">
+              <div
+                className="bg-white rounded-lg shadow p-4 cursor-pointer"
+                onClick={() => setIsStatsExpanded(!isStatsExpanded)}
+              >
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-xs text-gray-500">Money to Receive</p>
+                    {isLoading ? (
+                      <div className="h-7 w-24 bg-gray-200 animate-pulse rounded mt-1"></div>
+                    ) : (
+                      <p className="text-xl font-bold text-blue-600">
+                        रू {stats.totalLoansGiven.toLocaleString()}
+                      </p>
+                    )}
+                    <p className="text-xs text-gray-400">
+                      {isLoading ? "-" : `${stats.loansGivenCount} active loans`}
+                    </p>
+                  </div>
+                  <button className="text-gray-400 text-xl">
+                    {isStatsExpanded ? "▲" : "▼"}
+                  </button>
+                </div>
+              </div>
+              {isStatsExpanded && (
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div className="bg-white rounded-lg shadow p-4">
+                    <p className="text-xs text-gray-500">Money to Pay</p>
+                    {isLoading ? (
+                      <div className="h-7 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
+                    ) : (
+                      <p className="text-xl font-bold text-red-600">
+                        रू {stats.totalLoansTaken.toLocaleString()}
+                      </p>
+                    )}
+                    <p className="text-xs text-gray-400">
+                      {isLoading ? "-" : `${stats.loansTakenCount} active`}
+                    </p>
+                  </div>
+                  <div className="bg-white rounded-lg shadow p-4">
+                    <p className="text-xs text-gray-500">Dhukuti</p>
+                    {isLoading ? (
+                      <div className="h-7 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
+                    ) : (
+                      <p className="text-xl font-bold text-green-600">
+                        रू {stats.totalFixedDeposits.toLocaleString()}
+                      </p>
+                    )}
+                    <p className="text-xs text-gray-400">
+                      {isLoading ? "-" : `${stats.fixedDepositsCount} active`}
+                    </p>
+                  </div>
+                </div>
               )}
-              <p className="text-xs text-gray-400">
-                {isLoading ? "-" : `${stats.loansGivenCount} active loans`}
-              </p>
             </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <p className="text-xs text-gray-500">Money to Pay</p>
-              {isLoading ? (
-                <div className="h-7 w-24 bg-gray-200 animate-pulse rounded mt-1"></div>
-              ) : (
-                <p className="text-xl font-bold text-red-600">
-                  रू {stats.totalLoansTaken.toLocaleString()}
+
+            {/* Desktop View - Always show all */}
+            <div className="hidden md:grid md:grid-cols-3 gap-4">
+              <div className="bg-white rounded-lg shadow p-4">
+                <p className="text-xs text-gray-500">Money to Receive</p>
+                {isLoading ? (
+                  <div className="h-7 w-24 bg-gray-200 animate-pulse rounded mt-1"></div>
+                ) : (
+                  <p className="text-xl font-bold text-blue-600">
+                    रू {stats.totalLoansGiven.toLocaleString()}
+                  </p>
+                )}
+                <p className="text-xs text-gray-400">
+                  {isLoading ? "-" : `${stats.loansGivenCount} active loans`}
                 </p>
-              )}
-              <p className="text-xs text-gray-400">
-                {isLoading ? "-" : `${stats.loansTakenCount} active loans`}
-              </p>
-            </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <p className="text-xs text-gray-500">Dhukuti</p>
-              {isLoading ? (
-                <div className="h-7 w-24 bg-gray-200 animate-pulse rounded mt-1"></div>
-              ) : (
-                <p className="text-xl font-bold text-green-600">
-                  रू {stats.totalFixedDeposits.toLocaleString()}
+              </div>
+              <div className="bg-white rounded-lg shadow p-4">
+                <p className="text-xs text-gray-500">Money to Pay</p>
+                {isLoading ? (
+                  <div className="h-7 w-24 bg-gray-200 animate-pulse rounded mt-1"></div>
+                ) : (
+                  <p className="text-xl font-bold text-red-600">
+                    रू {stats.totalLoansTaken.toLocaleString()}
+                  </p>
+                )}
+                <p className="text-xs text-gray-400">
+                  {isLoading ? "-" : `${stats.loansTakenCount} active loans`}
                 </p>
-              )}
-              <p className="text-xs text-gray-400">
-                {isLoading ? "-" : `${stats.fixedDepositsCount} active`}
-              </p>
+              </div>
+              <div className="bg-white rounded-lg shadow p-4">
+                <p className="text-xs text-gray-500">Dhukuti</p>
+                {isLoading ? (
+                  <div className="h-7 w-24 bg-gray-200 animate-pulse rounded mt-1"></div>
+                ) : (
+                  <p className="text-xl font-bold text-green-600">
+                    रू {stats.totalFixedDeposits.toLocaleString()}
+                  </p>
+                )}
+                <p className="text-xs text-gray-400">
+                  {isLoading ? "-" : `${stats.fixedDepositsCount} active`}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -323,16 +374,9 @@ export default function LedgerPage() {
                         </p>
                       )}
                       <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-gray-400">
-                        {ledger.startDate && (
-                          <span>
-                            Start: {new Date(ledger.startDate).toLocaleDateString()}
-                          </span>
-                        )}
-                        {ledger.dueDate && (
-                          <span>
-                            Due: {new Date(ledger.dueDate).toLocaleDateString()}
-                          </span>
-                        )}
+                        <span>
+                          {new Date(ledger.createdAt).toLocaleDateString()}
+                        </span>
                         {ledger.interestRate > 0 && (
                           <span>Interest: {ledger.interestRate}%</span>
                         )}
@@ -500,35 +544,6 @@ export default function LedgerPage() {
                     />
                   </div>
                 )}
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Start Date
-                    </label>
-                    <input
-                      type="date"
-                      value={formData.startDate}
-                      onChange={(e) =>
-                        setFormData({ ...formData, startDate: e.target.value })
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {activeTab === "fixed_deposit" ? "Maturity Date" : "Due Date"}
-                    </label>
-                    <input
-                      type="date"
-                      value={formData.dueDate}
-                      onChange={(e) =>
-                        setFormData({ ...formData, dueDate: e.target.value })
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    />
-                  </div>
-                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
