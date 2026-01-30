@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 // Helper functions for date calculations (week starts Sunday)
 const getToday = () => {
@@ -79,7 +80,7 @@ export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [editingExpense, setEditingExpense] = useState(null);
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState("today");
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
   const [formData, setFormData] = useState({
@@ -267,6 +268,7 @@ export default function Dashboard() {
   };
 
   return (
+    <ProtectedRoute>
     <div className="min-h-screen bg-gray-100 p-4 md:p-8" suppressHydrationWarning>
       <div className="max-w-6xl mx-auto" suppressHydrationWarning>
         <div className="flex justify-end mb-6">
@@ -632,5 +634,6 @@ export default function Dashboard() {
         </div>
       )}
     </div>
+    </ProtectedRoute>
   );
 }

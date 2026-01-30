@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 export default function SavingPage() {
   const [savings, setSavings] = useState([]);
@@ -174,6 +175,7 @@ export default function SavingPage() {
   };
 
   return (
+    <ProtectedRoute>
     <div className="min-h-screen bg-gray-100 p-4 md:p-8" suppressHydrationWarning>
       <div className="max-w-4xl mx-auto" suppressHydrationWarning>
         <div className="flex justify-end mb-6">
@@ -418,5 +420,6 @@ export default function SavingPage() {
         </div>
       )}
     </div>
+    </ProtectedRoute>
   );
 }

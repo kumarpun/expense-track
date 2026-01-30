@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import ProtectedRoute from "../components/ProtectedRoute";
 import {
   BarChart,
   Bar,
@@ -218,6 +219,7 @@ export default function StatsPage() {
   }
 
   return (
+    <ProtectedRoute>
     <div className="min-h-screen bg-gray-100 p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6">
@@ -402,5 +404,6 @@ export default function StatsPage() {
         </div>
       </div>
     </div>
+    </ProtectedRoute>
   );
 }
