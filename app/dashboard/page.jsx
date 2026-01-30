@@ -267,8 +267,8 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gray-100 p-4 md:p-8" suppressHydrationWarning>
+      <div className="max-w-6xl mx-auto" suppressHydrationWarning>
         <div className="flex justify-end mb-6">
           <button
             onClick={openAddModal}
@@ -289,9 +289,13 @@ export default function Dashboard() {
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-sm text-gray-500">Today</p>
-                  <p className="text-2xl font-bold text-gray-800">
-                    रू {stats.todayTotal.toLocaleString()}
-                  </p>
+                  {isLoading ? (
+                    <div className="h-8 w-24 bg-gray-200 animate-pulse rounded mt-1"></div>
+                  ) : (
+                    <p className="text-2xl font-bold text-gray-800">
+                      रू {stats.todayTotal.toLocaleString()}
+                    </p>
+                  )}
                 </div>
                 <button className="text-gray-400 text-xl">
                   {isStatsExpanded ? "▲" : "▼"}
@@ -305,16 +309,24 @@ export default function Dashboard() {
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="text-xs text-gray-500">Last</p>
-                      <p className="text-lg font-bold text-gray-600">
-                        रू {stats.lastWeekTotal.toLocaleString()}
-                      </p>
+                      {isLoading ? (
+                        <div className="h-6 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
+                      ) : (
+                        <p className="text-lg font-bold text-gray-600">
+                          रू {stats.lastWeekTotal.toLocaleString()}
+                        </p>
+                      )}
                     </div>
                     <div className="text-xl text-gray-300">→</div>
                     <div>
                       <p className="text-xs text-gray-500">This</p>
-                      <p className="text-lg font-bold text-gray-800">
-                        रू {stats.thisWeekTotal.toLocaleString()}
-                      </p>
+                      {isLoading ? (
+                        <div className="h-6 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
+                      ) : (
+                        <p className="text-lg font-bold text-gray-800">
+                          रू {stats.thisWeekTotal.toLocaleString()}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -323,16 +335,24 @@ export default function Dashboard() {
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="text-xs text-gray-500">Last</p>
-                      <p className="text-lg font-bold text-gray-600">
-                        रू {stats.lastMonthTotal.toLocaleString()}
-                      </p>
+                      {isLoading ? (
+                        <div className="h-6 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
+                      ) : (
+                        <p className="text-lg font-bold text-gray-600">
+                          रू {stats.lastMonthTotal.toLocaleString()}
+                        </p>
+                      )}
                     </div>
                     <div className="text-xl text-gray-300">→</div>
                     <div>
                       <p className="text-xs text-gray-500">This</p>
-                      <p className="text-lg font-bold text-gray-800">
-                        रू {stats.thisMonthTotal.toLocaleString()}
-                      </p>
+                      {isLoading ? (
+                        <div className="h-6 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
+                      ) : (
+                        <p className="text-lg font-bold text-gray-800">
+                          रू {stats.thisMonthTotal.toLocaleString()}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -344,25 +364,37 @@ export default function Dashboard() {
           <div className="hidden md:grid md:grid-cols-3 gap-4">
             <div className="bg-white rounded-lg shadow p-4">
               <p className="text-sm text-gray-500">Today</p>
-              <p className="text-2xl font-bold text-gray-800">
-                रू {stats.todayTotal.toLocaleString()}
-              </p>
+              {isLoading ? (
+                <div className="h-8 w-24 bg-gray-200 animate-pulse rounded mt-1"></div>
+              ) : (
+                <p className="text-2xl font-bold text-gray-800">
+                  रू {stats.todayTotal.toLocaleString()}
+                </p>
+              )}
             </div>
             <div className="bg-white rounded-lg shadow p-4">
               <h3 className="font-semibold text-gray-700 mb-2">Week</h3>
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-xs text-gray-500">Last</p>
-                  <p className="text-lg font-bold text-gray-600">
-                    रू {stats.lastWeekTotal.toLocaleString()}
-                  </p>
+                  {isLoading ? (
+                    <div className="h-6 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
+                  ) : (
+                    <p className="text-lg font-bold text-gray-600">
+                      रू {stats.lastWeekTotal.toLocaleString()}
+                    </p>
+                  )}
                 </div>
                 <div className="text-xl text-gray-300">→</div>
                 <div>
                   <p className="text-xs text-gray-500">This</p>
-                  <p className="text-lg font-bold text-gray-800">
-                    रू {stats.thisWeekTotal.toLocaleString()}
-                  </p>
+                  {isLoading ? (
+                    <div className="h-6 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
+                  ) : (
+                    <p className="text-lg font-bold text-gray-800">
+                      रू {stats.thisWeekTotal.toLocaleString()}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -371,16 +403,24 @@ export default function Dashboard() {
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-xs text-gray-500">Last</p>
-                  <p className="text-lg font-bold text-gray-600">
-                    रू {stats.lastMonthTotal.toLocaleString()}
-                  </p>
+                  {isLoading ? (
+                    <div className="h-6 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
+                  ) : (
+                    <p className="text-lg font-bold text-gray-600">
+                      रू {stats.lastMonthTotal.toLocaleString()}
+                    </p>
+                  )}
                 </div>
                 <div className="text-xl text-gray-300">→</div>
                 <div>
                   <p className="text-xs text-gray-500">This</p>
-                  <p className="text-lg font-bold text-gray-800">
-                    रू {stats.thisMonthTotal.toLocaleString()}
-                  </p>
+                  {isLoading ? (
+                    <div className="h-6 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
+                  ) : (
+                    <p className="text-lg font-bold text-gray-800">
+                      रू {stats.thisMonthTotal.toLocaleString()}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -480,18 +520,24 @@ export default function Dashboard() {
                     <td className="hidden md:table-cell px-6 py-4 text-sm text-gray-500">
                       {expense.reason}
                     </td>
-                    <td className="px-4 md:px-6 py-4 text-sm text-right space-x-2">
+                    <td className="px-4 md:px-6 py-4 text-right whitespace-nowrap">
                       <button
                         onClick={() => openEditModal(expense)}
-                        className="text-blue-600 hover:text-blue-800 font-medium"
+                        className="text-blue-600 hover:text-blue-800 p-1.5 hover:bg-blue-50 rounded"
+                        title="Edit"
                       >
-                        Edit
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
                       </button>
                       <button
                         onClick={() => handleDelete(expense._id)}
-                        className="text-red-600 hover:text-red-800 font-medium"
+                        className="text-red-600 hover:text-red-800 p-1.5 hover:bg-red-50 rounded ml-1"
+                        title="Delete"
                       >
-                        Delete
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
                       </button>
                     </td>
                   </tr>

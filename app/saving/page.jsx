@@ -174,8 +174,8 @@ export default function SavingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4 md:p-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gray-100 p-4 md:p-8" suppressHydrationWarning>
+      <div className="max-w-4xl mx-auto" suppressHydrationWarning>
         <div className="flex justify-end mb-6">
           <button
             onClick={openAddModal}
@@ -189,42 +189,58 @@ export default function SavingPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-white rounded-lg shadow p-4">
             <p className="text-xs text-gray-500">Total Deposits</p>
-            <p className="text-xl font-bold text-green-600">
-              रू {totalSavings.toLocaleString()}
-            </p>
-            <p className="text-xs text-gray-400">{savings.length} deposits</p>
+            {isLoading ? (
+              <div className="h-7 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
+            ) : (
+              <p className="text-xl font-bold text-green-600">
+                रू {totalSavings.toLocaleString()}
+              </p>
+            )}
+            <p className="text-xs text-gray-400">{isLoading ? "-" : `${savings.length} deposits`}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-4">
             <p className="text-xs text-gray-500">Total Expenses</p>
-            <p className="text-xl font-bold text-red-600">
-              रू {stats.totalExpenses.toLocaleString()}
-            </p>
-            <p className="text-xs text-gray-400">{expenses.length} expenses</p>
+            {isLoading ? (
+              <div className="h-7 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
+            ) : (
+              <p className="text-xl font-bold text-red-600">
+                रू {stats.totalExpenses.toLocaleString()}
+              </p>
+            )}
+            <p className="text-xs text-gray-400">{isLoading ? "-" : `${expenses.length} expenses`}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-4">
             <p className="text-xs text-gray-500">Today's Activity</p>
-            <p
-              className={`text-xl font-bold ${
-                stats.todayNet >= 0 ? "text-green-600" : "text-red-600"
-              }`}
-            >
-              {stats.todayNet >= 0 ? "+" : ""}रू {stats.todayNet.toLocaleString()}
-            </p>
+            {isLoading ? (
+              <div className="h-7 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
+            ) : (
+              <p
+                className={`text-xl font-bold ${
+                  stats.todayNet >= 0 ? "text-green-600" : "text-red-600"
+                }`}
+              >
+                {stats.todayNet >= 0 ? "+" : ""}रू {stats.todayNet.toLocaleString()}
+              </p>
+            )}
             <p className="text-xs text-gray-400">
-              +{stats.todaySavings.toLocaleString()} / -{stats.todayExpenses.toLocaleString()}
+              {isLoading ? "-" : `+${stats.todaySavings.toLocaleString()} / -${stats.todayExpenses.toLocaleString()}`}
             </p>
           </div>
           <div className="bg-white rounded-lg shadow p-4">
             <p className="text-xs text-gray-500">This Month</p>
-            <p
-              className={`text-xl font-bold ${
-                stats.thisMonthNet >= 0 ? "text-green-600" : "text-red-600"
-              }`}
-            >
-              {stats.thisMonthNet >= 0 ? "+" : ""}रू {stats.thisMonthNet.toLocaleString()}
-            </p>
+            {isLoading ? (
+              <div className="h-7 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
+            ) : (
+              <p
+                className={`text-xl font-bold ${
+                  stats.thisMonthNet >= 0 ? "text-green-600" : "text-red-600"
+                }`}
+              >
+                {stats.thisMonthNet >= 0 ? "+" : ""}रू {stats.thisMonthNet.toLocaleString()}
+              </p>
+            )}
             <p className="text-xs text-gray-400">
-              +{stats.thisMonthSavings.toLocaleString()} / -{stats.thisMonthExpenses.toLocaleString()}
+              {isLoading ? "-" : `+${stats.thisMonthSavings.toLocaleString()} / -${stats.thisMonthExpenses.toLocaleString()}`}
             </p>
           </div>
         </div>
@@ -235,25 +251,37 @@ export default function SavingPage() {
           <div className="space-y-2">
             <div className="flex justify-between items-center py-2 border-b">
               <span className="text-gray-600">Total Deposits</span>
-              <span className="font-bold text-green-600">
-                + रू {totalSavings.toLocaleString()}
-              </span>
+              {isLoading ? (
+                <div className="h-5 w-24 bg-gray-200 animate-pulse rounded"></div>
+              ) : (
+                <span className="font-bold text-green-600">
+                  + रू {totalSavings.toLocaleString()}
+                </span>
+              )}
             </div>
             <div className="flex justify-between items-center py-2 border-b">
               <span className="text-gray-600">Total Expenses</span>
-              <span className="font-bold text-red-600">
-                - रू {stats.totalExpenses.toLocaleString()}
-              </span>
+              {isLoading ? (
+                <div className="h-5 w-24 bg-gray-200 animate-pulse rounded"></div>
+              ) : (
+                <span className="font-bold text-red-600">
+                  - रू {stats.totalExpenses.toLocaleString()}
+                </span>
+              )}
             </div>
             <div className="flex justify-between items-center py-2">
               <span className="font-semibold text-gray-800">Current Balance</span>
-              <span
-                className={`font-bold text-xl ${
-                  stats.currentBalance >= 0 ? "text-green-600" : "text-red-600"
-                }`}
-              >
-                रू {stats.currentBalance.toLocaleString()}
-              </span>
+              {isLoading ? (
+                <div className="h-7 w-28 bg-gray-200 animate-pulse rounded"></div>
+              ) : (
+                <span
+                  className={`font-bold text-xl ${
+                    stats.currentBalance >= 0 ? "text-green-600" : "text-red-600"
+                  }`}
+                >
+                  रू {stats.currentBalance.toLocaleString()}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -267,20 +295,20 @@ export default function SavingPage() {
             No savings yet. Start saving today!
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <table className="w-full">
+          <div className="bg-white rounded-lg shadow overflow-x-auto">
+            <table className="w-full min-w-[400px]">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Date
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Title
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Amount
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 md:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
                     Actions
                   </th>
                 </tr>
@@ -288,27 +316,33 @@ export default function SavingPage() {
               <tbody className="divide-y divide-gray-200">
                 {savings.map((saving) => (
                   <tr key={saving._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm text-gray-500">
+                    <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-gray-500 whitespace-nowrap">
                       {new Date(saving.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
+                    <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-gray-900">
                       {saving.title}
                     </td>
-                    <td className="px-6 py-4 text-sm font-medium text-green-600">
-                      + रू {Number(saving.amount).toLocaleString()}
+                    <td className="px-3 md:px-6 py-3 text-xs md:text-sm font-medium text-green-600 whitespace-nowrap">
+                      +रू {Number(saving.amount).toLocaleString()}
                     </td>
-                    <td className="px-6 py-4 text-sm text-right space-x-2">
+                    <td className="px-3 md:px-6 py-3 text-right whitespace-nowrap">
                       <button
                         onClick={() => openEditModal(saving)}
-                        className="text-blue-600 hover:text-blue-800 font-medium"
+                        className="text-blue-600 hover:text-blue-800 p-1.5 hover:bg-blue-50 rounded"
+                        title="Edit"
                       >
-                        Edit
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
                       </button>
                       <button
                         onClick={() => handleDelete(saving._id)}
-                        className="text-red-600 hover:text-red-800 font-medium"
+                        className="text-red-600 hover:text-red-800 p-1.5 hover:bg-red-50 rounded ml-1"
+                        title="Delete"
                       >
-                        Delete
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
                       </button>
                     </td>
                   </tr>

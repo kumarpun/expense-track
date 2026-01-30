@@ -21,8 +21,8 @@ export default function Navbar() {
             <Image
               src="/expense.png"
               alt="Expense Tracker"
-              width={150}
-              height={50}
+              width={250}
+              height={100}
               className="h-12 w-auto"
               priority
             />
