@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import ProtectedRoute from "../components/ProtectedRoute";
+import ConfirmModal from "../components/ConfirmModal";
 
 export default function SavingPage() {
   const [savings, setSavings] = useState([]);
@@ -11,6 +12,7 @@ export default function SavingPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [editingSaving, setEditingSaving] = useState(null);
   const [isStatsExpanded, setIsStatsExpanded] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, savingId: null });
   const [formData, setFormData] = useState({
     title: "",
     amount: "",
@@ -159,13 +161,16 @@ export default function SavingPage() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this saving?")) return;
+  const handleDeleteClick = (id) => {
+    setDeleteConfirm({ isOpen: true, savingId: id });
+  };
+
+  const handleDeleteConfirm = async () => {
     try {
       const res = await fetch("/api/saving", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
+        body: JSON.stringify({ id: deleteConfirm.savingId }),
       });
       if (res.ok) {
         fetchData();
@@ -177,7 +182,7 @@ export default function SavingPage() {
 
   return (
     <ProtectedRoute>
-    <div className="min-h-screen bg-gray-100 p-4 md:p-8" suppressHydrationWarning>
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-4 md:p-8" suppressHydrationWarning>
       <div className="max-w-4xl mx-auto" suppressHydrationWarning>
         <div className="flex justify-end mb-6">
           <button
@@ -193,12 +198,12 @@ export default function SavingPage() {
           {/* Mobile View - Collapsible */}
           <div className="md:hidden">
             <div
-              className="bg-white rounded-lg shadow p-4 cursor-pointer"
+              className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 cursor-pointer"
               onClick={() => setIsStatsExpanded(!isStatsExpanded)}
             >
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="text-xs text-gray-500">Total Deposits</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Total Deposits</p>
                   {isLoading ? (
                     <div className="h-7 w-24 bg-gray-200 animate-pulse rounded mt-1"></div>
                   ) : (
@@ -215,8 +220,8 @@ export default function SavingPage() {
             </div>
             {isStatsExpanded && (
               <div className="grid grid-cols-3 gap-2 mt-4">
-                <div className="bg-white rounded-lg shadow p-3">
-                  <p className="text-xs text-gray-500">Total Expenses</p>
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Total Expenses</p>
                   {isLoading ? (
                     <div className="h-6 w-16 bg-gray-200 animate-pulse rounded mt-1"></div>
                   ) : (
@@ -226,8 +231,8 @@ export default function SavingPage() {
                   )}
                   <p className="text-xs text-gray-400">{isLoading ? "-" : `${expenses.length} expenses`}</p>
                 </div>
-                <div className="bg-white rounded-lg shadow p-3">
-                  <p className="text-xs text-gray-500">Today</p>
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Today</p>
                   {isLoading ? (
                     <div className="h-6 w-16 bg-gray-200 animate-pulse rounded mt-1"></div>
                   ) : (
@@ -243,8 +248,8 @@ export default function SavingPage() {
                     {isLoading ? "-" : `+${stats.todaySavings.toLocaleString()} / -${stats.todayExpenses.toLocaleString()}`}
                   </p>
                 </div>
-                <div className="bg-white rounded-lg shadow p-3">
-                  <p className="text-xs text-gray-500">This Month</p>
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">This Month</p>
                   {isLoading ? (
                     <div className="h-6 w-16 bg-gray-200 animate-pulse rounded mt-1"></div>
                   ) : (
@@ -266,8 +271,8 @@ export default function SavingPage() {
 
           {/* Desktop View - Always show all */}
           <div className="hidden md:grid md:grid-cols-4 gap-4">
-            <div className="bg-white rounded-lg shadow p-4">
-              <p className="text-xs text-gray-500">Total Deposits</p>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+              <p className="text-xs text-gray-500 dark:text-gray-400">Total Deposits</p>
               {isLoading ? (
                 <div className="h-7 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
               ) : (
@@ -277,8 +282,8 @@ export default function SavingPage() {
               )}
               <p className="text-xs text-gray-400">{isLoading ? "-" : `${savings.length} deposits`}</p>
             </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <p className="text-xs text-gray-500">Total Expenses</p>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+              <p className="text-xs text-gray-500 dark:text-gray-400">Total Expenses</p>
               {isLoading ? (
                 <div className="h-7 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
               ) : (
@@ -288,8 +293,8 @@ export default function SavingPage() {
               )}
               <p className="text-xs text-gray-400">{isLoading ? "-" : `${expenses.length} expenses`}</p>
             </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <p className="text-xs text-gray-500">Today's Activity</p>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+              <p className="text-xs text-gray-500 dark:text-gray-400">Today's Activity</p>
               {isLoading ? (
                 <div className="h-7 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
               ) : (
@@ -305,8 +310,8 @@ export default function SavingPage() {
                 {isLoading ? "-" : `+${stats.todaySavings.toLocaleString()} / -${stats.todayExpenses.toLocaleString()}`}
               </p>
             </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <p className="text-xs text-gray-500">This Month</p>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+              <p className="text-xs text-gray-500 dark:text-gray-400">This Month</p>
               {isLoading ? (
                 <div className="h-7 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
               ) : (
@@ -326,8 +331,8 @@ export default function SavingPage() {
         </div>
 
         {/* Breakdown Card */}
-        <div className="bg-white rounded-lg shadow p-4 mb-6">
-          <h3 className="font-semibold text-gray-700 mb-3">Balance Breakdown</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
+          <h3 className="font-semibold text-gray-700 dark:text-gray-200 mb-3">Balance Breakdown</h3>
           <div className="space-y-2">
             <div className="flex justify-between items-center py-2 border-b">
               <span className="text-gray-600">Total Deposits</span>
@@ -350,7 +355,7 @@ export default function SavingPage() {
               )}
             </div>
             <div className="flex justify-between items-center py-2">
-              <span className="font-semibold text-gray-800">Current Balance</span>
+              <span className="font-semibold text-gray-800 dark:text-white">Current Balance</span>
               {isLoading ? (
                 <div className="h-7 w-28 bg-gray-200 animate-pulse rounded"></div>
               ) : (
@@ -367,36 +372,36 @@ export default function SavingPage() {
         </div>
 
         {/* Savings List */}
-        <h3 className="font-semibold text-gray-700 mb-3">Deposit History</h3>
+        <h3 className="font-semibold text-gray-700 dark:text-gray-200 mb-3">Deposit History</h3>
         {isLoading ? (
-          <div className="text-center py-10 text-gray-500">Loading...</div>
+          <div className="text-center py-10 text-gray-500 dark:text-gray-400">Loading...</div>
         ) : savings.length === 0 ? (
-          <div className="text-center py-10 text-gray-500">
+          <div className="text-center py-10 text-gray-500 dark:text-gray-400">
             No savings yet. Start saving today!
           </div>
         ) : (
           <div className="bg-white rounded-lg shadow overflow-x-auto">
             <table className="w-full min-w-[400px]">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                     Date
                   </th>
-                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                     Title
                   </th>
-                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                     Amount
                   </th>
-                  <th className="px-3 md:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-3 md:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                     Actions
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {savings.map((saving) => (
-                  <tr key={saving._id} className="hover:bg-gray-50">
-                    <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-gray-500 whitespace-nowrap">
+                  <tr key={saving._id} className="hover:bg-gray-50 dark:bg-gray-700">
+                    <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
                       {new Date(saving.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-gray-900">
@@ -416,7 +421,7 @@ export default function SavingPage() {
                         </svg>
                       </button>
                       <button
-                        onClick={() => handleDelete(saving._id)}
+                        onClick={() => handleDeleteClick(saving._id)}
                         className="text-red-600 hover:text-red-800 p-1.5 hover:bg-red-50 rounded ml-1"
                         title="Delete"
                       >
@@ -437,7 +442,7 @@ export default function SavingPage() {
         <div className="fixed inset-0 bg-gray-400/30 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-800">
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
                 {editingSaving ? "Edit Saving" : "Add Saving"}
               </h2>
               <button
@@ -449,7 +454,7 @@ export default function SavingPage() {
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                   Title
                 </label>
                 <input
@@ -459,12 +464,12 @@ export default function SavingPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, title: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-black"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-black"
                   placeholder="e.g., Salary, Bonus"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                   Amount
                 </label>
                 <input
@@ -474,7 +479,7 @@ export default function SavingPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, amount: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-black"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-black"
                   placeholder="0.00"
                 />
               </div>
@@ -482,7 +487,7 @@ export default function SavingPage() {
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:bg-gray-700 transition-colors"
                 >
                   Cancel
                 </button>
@@ -497,6 +502,14 @@ export default function SavingPage() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm({ isOpen: false, savingId: null })}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Saving"
+        message="Are you sure you want to delete this saving? This action cannot be undone."
+      />
     </div>
     </ProtectedRoute>
   );

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import ProtectedRoute from "../components/ProtectedRoute";
+import ConfirmModal from "../components/ConfirmModal";
 
 export default function LedgerPage() {
   const [ledgers, setLedgers] = useState([]);
@@ -18,6 +19,7 @@ export default function LedgerPage() {
   const [editingLedger, setEditingLedger] = useState(null);
   const [activeTab, setActiveTab] = useState("loan_given");
   const [isStatsExpanded, setIsStatsExpanded] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, ledgerId: null });
   const [formData, setFormData] = useState({
     type: "loan_given",
     title: "",
@@ -112,13 +114,16 @@ export default function LedgerPage() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this entry?")) return;
+  const handleDeleteClick = (id) => {
+    setDeleteConfirm({ isOpen: true, ledgerId: id });
+  };
+
+  const handleDeleteConfirm = async () => {
     try {
       const res = await fetch("/api/ledger", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
+        body: JSON.stringify({ id: deleteConfirm.ledgerId }),
       });
       if (res.ok) {
         fetchLedgers();
@@ -175,19 +180,19 @@ export default function LedgerPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-100 p-4 md:p-8" suppressHydrationWarning>
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-4 md:p-8" suppressHydrationWarning>
         <div className="max-w-6xl mx-auto" suppressHydrationWarning>
           {/* Stats Cards */}
           <div className="mb-6">
             {/* Mobile View - Collapsible */}
             <div className="md:hidden">
               <div
-                className="bg-white rounded-lg shadow p-4 cursor-pointer"
+                className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 cursor-pointer"
                 onClick={() => setIsStatsExpanded(!isStatsExpanded)}
               >
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="text-xs text-gray-500">Money to Receive</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Money to Receive</p>
                     {isLoading ? (
                       <div className="h-7 w-24 bg-gray-200 animate-pulse rounded mt-1"></div>
                     ) : (
@@ -206,8 +211,8 @@ export default function LedgerPage() {
               </div>
               {isStatsExpanded && (
                 <div className="grid grid-cols-2 gap-4 mt-4">
-                  <div className="bg-white rounded-lg shadow p-4">
-                    <p className="text-xs text-gray-500">Money to Pay</p>
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Money to Pay</p>
                     {isLoading ? (
                       <div className="h-7 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
                     ) : (
@@ -219,8 +224,8 @@ export default function LedgerPage() {
                       {isLoading ? "-" : `${stats.loansTakenCount} active`}
                     </p>
                   </div>
-                  <div className="bg-white rounded-lg shadow p-4">
-                    <p className="text-xs text-gray-500">Dhukuti</p>
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Dhukuti</p>
                     {isLoading ? (
                       <div className="h-7 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
                     ) : (
@@ -238,8 +243,8 @@ export default function LedgerPage() {
 
             {/* Desktop View - Always show all */}
             <div className="hidden md:grid md:grid-cols-3 gap-4">
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-xs text-gray-500">Money to Receive</p>
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+                <p className="text-xs text-gray-500 dark:text-gray-400">Money to Receive</p>
                 {isLoading ? (
                   <div className="h-7 w-24 bg-gray-200 animate-pulse rounded mt-1"></div>
                 ) : (
@@ -251,8 +256,8 @@ export default function LedgerPage() {
                   {isLoading ? "-" : `${stats.loansGivenCount} active loans`}
                 </p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-xs text-gray-500">Money to Pay</p>
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+                <p className="text-xs text-gray-500 dark:text-gray-400">Money to Pay</p>
                 {isLoading ? (
                   <div className="h-7 w-24 bg-gray-200 animate-pulse rounded mt-1"></div>
                 ) : (
@@ -264,8 +269,8 @@ export default function LedgerPage() {
                   {isLoading ? "-" : `${stats.loansTakenCount} active loans`}
                 </p>
               </div>
-              <div className="bg-white rounded-lg shadow p-4">
-                <p className="text-xs text-gray-500">Dhukuti</p>
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+                <p className="text-xs text-gray-500 dark:text-gray-400">Dhukuti</p>
                 {isLoading ? (
                   <div className="h-7 w-24 bg-gray-200 animate-pulse rounded mt-1"></div>
                 ) : (
@@ -281,14 +286,14 @@ export default function LedgerPage() {
           </div>
 
           {/* Tabs */}
-          <div className="bg-white rounded-lg shadow mb-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-6">
             <div className="flex border-b">
               <button
                 onClick={() => setActiveTab("loan_given")}
                 className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
                   activeTab === "loan_given"
                     ? "text-blue-600 border-b-2 border-blue-600"
-                    : "text-gray-500 hover:text-gray-700"
+                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200"
                 }`}
               >
                 Loans Given
@@ -298,7 +303,7 @@ export default function LedgerPage() {
                 className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
                   activeTab === "loan_taken"
                     ? "text-red-600 border-b-2 border-red-600"
-                    : "text-gray-500 hover:text-gray-700"
+                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200"
                 }`}
               >
                 Loans to Pay
@@ -308,7 +313,7 @@ export default function LedgerPage() {
                 className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
                   activeTab === "fixed_deposit"
                     ? "text-green-600 border-b-2 border-green-600"
-                    : "text-gray-500 hover:text-gray-700"
+                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200"
                 }`}
               >
                 Dhukuti
@@ -318,7 +323,7 @@ export default function LedgerPage() {
 
           {/* Add Button */}
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">{getTabTitle()}</h2>
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-white">{getTabTitle()}</h2>
             <button
               onClick={() => openAddModal(activeTab)}
               className={`text-white px-4 py-2 rounded-lg transition-colors text-sm ${
@@ -335,9 +340,9 @@ export default function LedgerPage() {
 
           {/* List */}
           {isLoading ? (
-            <div className="text-center py-10 text-gray-500">Loading...</div>
+            <div className="text-center py-10 text-gray-500 dark:text-gray-400">Loading...</div>
           ) : filteredLedgers.length === 0 ? (
-            <div className="text-center py-10 text-gray-500 bg-white rounded-lg shadow">
+            <div className="text-center py-10 text-gray-500 dark:text-gray-400 bg-white rounded-lg shadow">
               No entries yet. Add your first {getTabTitle().toLowerCase()}!
             </div>
           ) : (
@@ -345,9 +350,9 @@ export default function LedgerPage() {
               {filteredLedgers.map((ledger) => (
                 <div
                   key={ledger._id}
-                  className={`bg-white rounded-lg shadow p-4 border-l-4 ${
+                  className={`bg-white dark:bg-gray-800 rounded-lg shadow p-4 border-l-4 ${
                     ledger.status === "completed"
-                      ? "border-gray-300 opacity-60"
+                      ? "border-gray-300 dark:border-gray-600 opacity-60"
                       : activeTab === "loan_given"
                       ? "border-blue-500"
                       : activeTab === "loan_taken"
@@ -358,7 +363,7 @@ export default function LedgerPage() {
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-gray-800">
+                        <h3 className="font-semibold text-gray-800 dark:text-white">
                           {ledger.title}
                         </h3>
                         {ledger.status === "completed" && (
@@ -368,7 +373,7 @@ export default function LedgerPage() {
                         )}
                       </div>
                       {ledger.personName && (
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
                           {activeTab === "loan_given" ? "To: " : "From: "}
                           {ledger.personName}
                         </p>
@@ -399,7 +404,7 @@ export default function LedgerPage() {
                           रू {ledger.amount.toLocaleString()}
                         </p>
                         {ledger.paidAmount > 0 && ledger.paidAmount < ledger.amount && (
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
                             Paid: रू {ledger.paidAmount.toLocaleString()}
                           </p>
                         )}
@@ -448,7 +453,7 @@ export default function LedgerPage() {
                           </svg>
                         </button>
                         <button
-                          onClick={() => handleDelete(ledger._id)}
+                          onClick={() => handleDeleteClick(ledger._id)}
                           className="text-red-600 hover:text-red-800 p-1.5 hover:bg-red-50 rounded"
                           title="Delete"
                         >
@@ -481,7 +486,7 @@ export default function LedgerPage() {
           <div className="fixed inset-0 bg-gray-400/30 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-gray-800">
+                <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
                   {editingLedger ? "Edit Entry" : `Add ${getTabTitle()}`}
                 </h2>
                 <button
@@ -493,7 +498,7 @@ export default function LedgerPage() {
               </div>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                     Title *
                   </label>
                   <input
@@ -503,7 +508,7 @@ export default function LedgerPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, title: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                     placeholder={
                       activeTab === "fixed_deposit"
                         ? "e.g., Dhukuti Group Name"
@@ -513,7 +518,7 @@ export default function LedgerPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                     Amount *
                   </label>
                   <input
@@ -523,14 +528,14 @@ export default function LedgerPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, amount: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                     placeholder="0"
                   />
                 </div>
 
                 {activeTab !== "fixed_deposit" && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                       {activeTab === "loan_given" ? "Given To" : "Borrowed From"}
                     </label>
                     <input
@@ -539,14 +544,14 @@ export default function LedgerPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, personName: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                       placeholder="Person name"
                     />
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                     Interest Rate (%)
                   </label>
                   <input
@@ -556,7 +561,7 @@ export default function LedgerPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, interestRate: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                     placeholder="0"
                   />
                 </div>
@@ -564,7 +569,7 @@ export default function LedgerPage() {
                 {editingLedger && (
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Status
                       </label>
                       <select
@@ -572,7 +577,7 @@ export default function LedgerPage() {
                         onChange={(e) =>
                           setFormData({ ...formData, status: e.target.value })
                         }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                       >
                         <option value="active">Active</option>
                         <option value="partial">Partial</option>
@@ -580,7 +585,7 @@ export default function LedgerPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Paid Amount
                       </label>
                       <input
@@ -589,7 +594,7 @@ export default function LedgerPage() {
                         onChange={(e) =>
                           setFormData({ ...formData, paidAmount: e.target.value })
                         }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                         placeholder="0"
                       />
                     </div>
@@ -597,7 +602,7 @@ export default function LedgerPage() {
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                     Notes
                   </label>
                   <textarea
@@ -606,7 +611,7 @@ export default function LedgerPage() {
                       setFormData({ ...formData, notes: e.target.value })
                     }
                     rows={2}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                     placeholder="Any additional notes..."
                   />
                 </div>
@@ -615,7 +620,7 @@ export default function LedgerPage() {
                   <button
                     type="button"
                     onClick={closeModal}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 transition-colors"
                   >
                     Cancel
                   </button>
@@ -636,6 +641,14 @@ export default function LedgerPage() {
             </div>
           </div>
         )}
+
+        <ConfirmModal
+          isOpen={deleteConfirm.isOpen}
+          onClose={() => setDeleteConfirm({ isOpen: false, ledgerId: null })}
+          onConfirm={handleDeleteConfirm}
+          title="Delete Entry"
+          message="Are you sure you want to delete this entry? This action cannot be undone."
+        />
       </div>
     </ProtectedRoute>
   );

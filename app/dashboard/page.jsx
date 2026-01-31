@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import ProtectedRoute from "../components/ProtectedRoute";
+import ConfirmModal from "../components/ConfirmModal";
 
 // Helper functions for date calculations (week starts Sunday)
 const getToday = () => {
@@ -89,6 +90,7 @@ export default function Dashboard() {
     reason: "",
   });
   const [isStatsExpanded, setIsStatsExpanded] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, expenseId: null });
 
   const fetchExpenses = async () => {
     try {
@@ -251,13 +253,16 @@ export default function Dashboard() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this expense?")) return;
+  const handleDeleteClick = (id) => {
+    setDeleteConfirm({ isOpen: true, expenseId: id });
+  };
+
+  const handleDeleteConfirm = async () => {
     try {
       const res = await fetch("/api/expense", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
+        body: JSON.stringify({ id: deleteConfirm.expenseId }),
       });
       if (res.ok) {
         fetchExpenses();
@@ -269,7 +274,7 @@ export default function Dashboard() {
 
   return (
     <ProtectedRoute>
-    <div className="min-h-screen bg-gray-100 p-4 md:p-8" suppressHydrationWarning>
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-4 md:p-8" suppressHydrationWarning>
       <div className="max-w-6xl mx-auto" suppressHydrationWarning>
         <div className="flex justify-end mb-6">
           <button
@@ -285,16 +290,16 @@ export default function Dashboard() {
           {/* Mobile View - Collapsible */}
           <div className="md:hidden">
             <div
-              className="bg-white rounded-lg shadow p-4 cursor-pointer"
+              className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 cursor-pointer"
               onClick={() => setIsStatsExpanded(!isStatsExpanded)}
             >
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="text-sm text-gray-500">Today</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Today</p>
                   {isLoading ? (
                     <div className="h-8 w-24 bg-gray-200 animate-pulse rounded mt-1"></div>
                   ) : (
-                    <p className="text-2xl font-bold text-gray-800">
+                    <p className="text-2xl font-bold text-gray-800 dark:text-white">
                       रू {stats.todayTotal.toLocaleString()}
                     </p>
                   )}
@@ -306,52 +311,52 @@ export default function Dashboard() {
             </div>
             {isStatsExpanded && (
               <div className="grid grid-cols-1 gap-4 mt-4">
-                <div className="bg-white rounded-lg shadow p-4">
-                  <h3 className="font-semibold text-gray-700 mb-2">Week</h3>
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+                  <h3 className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Week</h3>
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="text-xs text-gray-500">Last</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Last</p>
                       {isLoading ? (
                         <div className="h-6 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
                       ) : (
-                        <p className="text-lg font-bold text-gray-600">
+                        <p className="text-lg font-bold text-gray-600 dark:text-gray-300">
                           रू {stats.lastWeekTotal.toLocaleString()}
                         </p>
                       )}
                     </div>
                     <div className="text-xl text-gray-300">→</div>
                     <div>
-                      <p className="text-xs text-gray-500">This</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">This</p>
                       {isLoading ? (
                         <div className="h-6 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
                       ) : (
-                        <p className="text-lg font-bold text-gray-800">
+                        <p className="text-lg font-bold text-gray-800 dark:text-white">
                           रू {stats.thisWeekTotal.toLocaleString()}
                         </p>
                       )}
                     </div>
                   </div>
                 </div>
-                <div className="bg-white rounded-lg shadow p-4">
-                  <h3 className="font-semibold text-gray-700 mb-2">Month</h3>
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+                  <h3 className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Month</h3>
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="text-xs text-gray-500">Last</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Last</p>
                       {isLoading ? (
                         <div className="h-6 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
                       ) : (
-                        <p className="text-lg font-bold text-gray-600">
+                        <p className="text-lg font-bold text-gray-600 dark:text-gray-300">
                           रू {stats.lastMonthTotal.toLocaleString()}
                         </p>
                       )}
                     </div>
                     <div className="text-xl text-gray-300">→</div>
                     <div>
-                      <p className="text-xs text-gray-500">This</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">This</p>
                       {isLoading ? (
                         <div className="h-6 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
                       ) : (
-                        <p className="text-lg font-bold text-gray-800">
+                        <p className="text-lg font-bold text-gray-800 dark:text-white">
                           रू {stats.thisMonthTotal.toLocaleString()}
                         </p>
                       )}
@@ -364,62 +369,62 @@ export default function Dashboard() {
 
           {/* Desktop View - Always show all */}
           <div className="hidden md:grid md:grid-cols-3 gap-4">
-            <div className="bg-white rounded-lg shadow p-4">
-              <p className="text-sm text-gray-500">Today</p>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+              <p className="text-sm text-gray-500 dark:text-gray-400">Today</p>
               {isLoading ? (
                 <div className="h-8 w-24 bg-gray-200 animate-pulse rounded mt-1"></div>
               ) : (
-                <p className="text-2xl font-bold text-gray-800">
+                <p className="text-2xl font-bold text-gray-800 dark:text-white">
                   रू {stats.todayTotal.toLocaleString()}
                 </p>
               )}
             </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <h3 className="font-semibold text-gray-700 mb-2">Week</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+              <h3 className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Week</h3>
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="text-xs text-gray-500">Last</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Last</p>
                   {isLoading ? (
                     <div className="h-6 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
                   ) : (
-                    <p className="text-lg font-bold text-gray-600">
+                    <p className="text-lg font-bold text-gray-600 dark:text-gray-300">
                       रू {stats.lastWeekTotal.toLocaleString()}
                     </p>
                   )}
                 </div>
                 <div className="text-xl text-gray-300">→</div>
                 <div>
-                  <p className="text-xs text-gray-500">This</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">This</p>
                   {isLoading ? (
                     <div className="h-6 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
                   ) : (
-                    <p className="text-lg font-bold text-gray-800">
+                    <p className="text-lg font-bold text-gray-800 dark:text-white">
                       रू {stats.thisWeekTotal.toLocaleString()}
                     </p>
                   )}
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <h3 className="font-semibold text-gray-700 mb-2">Month</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+              <h3 className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Month</h3>
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="text-xs text-gray-500">Last</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Last</p>
                   {isLoading ? (
                     <div className="h-6 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
                   ) : (
-                    <p className="text-lg font-bold text-gray-600">
+                    <p className="text-lg font-bold text-gray-600 dark:text-gray-300">
                       रू {stats.lastMonthTotal.toLocaleString()}
                     </p>
                   )}
                 </div>
                 <div className="text-xl text-gray-300">→</div>
                 <div>
-                  <p className="text-xs text-gray-500">This</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">This</p>
                   {isLoading ? (
                     <div className="h-6 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
                   ) : (
-                    <p className="text-lg font-bold text-gray-800">
+                    <p className="text-lg font-bold text-gray-800 dark:text-white">
                       रू {stats.thisMonthTotal.toLocaleString()}
                     </p>
                   )}
@@ -433,11 +438,11 @@ export default function Dashboard() {
         <div className="bg-white rounded-lg shadow p-4 mb-6">
           <div className="flex flex-wrap gap-4 items-center">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Filter</label>
+              <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Filter</label>
               <select
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-black text-sm min-w-[150px]"
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-black text-sm min-w-[150px]"
               >
                 <option value="all">All</option>
                 <option value="today">Today</option>
@@ -452,25 +457,25 @@ export default function Dashboard() {
             {filter === "custom" && (
               <>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
                     Start Date
                   </label>
                   <input
                     type="date"
                     value={customStartDate}
                     onChange={(e) => setCustomStartDate(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-lg text-black text-sm"
+                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-black text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
                     End Date
                   </label>
                   <input
                     type="date"
                     value={customEndDate}
                     onChange={(e) => setCustomEndDate(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-lg text-black text-sm"
+                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-black text-sm"
                   />
                 </div>
               </>
@@ -480,46 +485,46 @@ export default function Dashboard() {
 
         {/* Expense List */}
         {isLoading ? (
-          <div className="text-center py-10 text-gray-500">Loading...</div>
+          <div className="text-center py-10 text-gray-500 dark:text-gray-400">Loading...</div>
         ) : filteredExpenses.length === 0 ? (
-          <div className="text-center py-10 text-gray-500">
+          <div className="text-center py-10 text-gray-500 dark:text-gray-400">
             No expenses found for the selected filter.
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Date
                   </th>
-                  <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Title
                   </th>
-                  <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Amount
                   </th>
-                  <th className="hidden md:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="hidden md:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Payment
                   </th>
-                  <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredExpenses.map((expense) => (
                   <tr key={expense._id} className="hover:bg-gray-50">
-                    <td className="px-4 md:px-6 py-4 text-xs text-gray-500">
+                    <td className="px-4 md:px-6 py-4 text-xs text-gray-500 dark:text-gray-400">
                       {new Date(expense.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="px-4 md:px-6 py-4 text-sm text-gray-900">
+                    <td className="px-4 md:px-6 py-4 text-sm text-gray-900 dark:text-white">
                       {expense.title}
                     </td>
-                    <td className="px-4 md:px-6 py-4 text-sm text-gray-900">
+                    <td className="px-4 md:px-6 py-4 text-sm text-gray-900 dark:text-white">
                       रू {expense.amount}
                     </td>
-                    <td className="hidden md:table-cell px-6 py-4 text-sm text-gray-500">
+                    <td className="hidden md:table-cell px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                       {expense.reason}
                     </td>
                     <td className="px-4 md:px-6 py-4 text-right whitespace-nowrap">
@@ -533,7 +538,7 @@ export default function Dashboard() {
                         </svg>
                       </button>
                       <button
-                        onClick={() => handleDelete(expense._id)}
+                        onClick={() => handleDeleteClick(expense._id)}
                         className="text-red-600 hover:text-red-800 p-1.5 hover:bg-red-50 rounded ml-1"
                         title="Delete"
                       >
@@ -552,21 +557,21 @@ export default function Dashboard() {
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-400/30 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-800">
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
                 {editingExpense ? "Edit Expense" : "Add Expense"}
               </h2>
               <button
                 onClick={closeModal}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 dark:text-gray-300"
               >
                 ✕
               </button>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                   Title
                 </label>
                 <input
@@ -576,12 +581,12 @@ export default function Dashboard() {
                   onChange={(e) =>
                     setFormData({ ...formData, title: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   placeholder="e.g., Groceries"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                   Amount
                 </label>
                 <input
@@ -591,12 +596,12 @@ export default function Dashboard() {
                   onChange={(e) =>
                     setFormData({ ...formData, amount: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                   placeholder="0.00"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                   Payment Method
                 </label>
                 <select
@@ -605,7 +610,7 @@ export default function Dashboard() {
                   onChange={(e) =>
                     setFormData({ ...formData, reason: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                 >
                   <option value="">Select payment method</option>
                   <option value="Cash">Cash</option>
@@ -618,7 +623,7 @@ export default function Dashboard() {
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
@@ -633,6 +638,14 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm({ isOpen: false, expenseId: null })}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Expense"
+        message="Are you sure you want to delete this expense? This action cannot be undone."
+      />
     </div>
     </ProtectedRoute>
   );
