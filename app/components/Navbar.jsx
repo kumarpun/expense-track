@@ -42,7 +42,7 @@ export default function Navbar() {
   };
 
   const navItems = [
-    { href: "/dashboard", label: "Dashboard" },
+    { href: "/dashboard", label: "Home" },
     { href: "/saving", label: "Saving" },
     { href: "/ledger", label: "Ledger" },
     { href: "/stats", label: "Stats" },

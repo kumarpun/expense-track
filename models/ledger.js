@@ -4,7 +4,6 @@ const ledgerSchema = new Schema(
   {
     type: {
       type: String,
-      enum: ["loan_given", "loan_taken", "fixed_deposit"],
       required: true,
     },
     title: {

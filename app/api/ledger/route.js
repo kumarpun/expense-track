@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import Ledger from "../../../models/ledger";
+import LedgerCategory from "../../../models/ledgerCategory";
 import { dbConnect } from "../dbConnect";
 import { getSession } from "../../../lib/auth";
 
@@ -24,31 +25,42 @@ export async function GET(request) {
 
     const ledgers = await Ledger.find(query).sort({ createdAt: -1 });
 
-    // Calculate totals by type
+    // Get user's categories
+    const categories = await LedgerCategory.find({ userId: session.userId }).sort({
+      order: 1,
+    });
+
+    // Calculate stats per category dynamically
+    const categoryStats = {};
+    for (const category of categories) {
+      const categoryLedgers = ledgers.filter((l) => l.type === category.slug);
+      const activeLedgers = categoryLedgers.filter((l) => l.status === "active");
+      categoryStats[category.slug] = {
+        total: activeLedgers.reduce((sum, l) => sum + (l.amount - l.paidAmount), 0),
+        count: activeLedgers.length,
+      };
+    }
+
+    // Backward compatibility - also calculate old stats
     const loansGiven = ledgers.filter((l) => l.type === "loan_given");
     const loansTaken = ledgers.filter((l) => l.type === "loan_taken");
     const fixedDeposits = ledgers.filter((l) => l.type === "fixed_deposit");
-
-    const totalLoansGiven = loansGiven.reduce(
-      (sum, l) => sum + (l.amount - l.paidAmount),
-      0
-    );
-    const totalLoansTaken = loansTaken.reduce(
-      (sum, l) => sum + (l.amount - l.paidAmount),
-      0
-    );
-    const totalFixedDeposits = fixedDeposits
-      .filter((l) => l.status === "active")
-      .reduce((sum, l) => sum + l.amount, 0);
 
     return NextResponse.json(
       {
         success: true,
         data: ledgers,
+        categoryStats,
         stats: {
-          totalLoansGiven,
-          totalLoansTaken,
-          totalFixedDeposits,
+          totalLoansGiven: loansGiven
+            .filter((l) => l.status === "active")
+            .reduce((sum, l) => sum + (l.amount - l.paidAmount), 0),
+          totalLoansTaken: loansTaken
+            .filter((l) => l.status === "active")
+            .reduce((sum, l) => sum + (l.amount - l.paidAmount), 0),
+          totalFixedDeposits: fixedDeposits
+            .filter((l) => l.status === "active")
+            .reduce((sum, l) => sum + l.amount, 0),
           loansGivenCount: loansGiven.filter((l) => l.status === "active").length,
           loansTakenCount: loansTaken.filter((l) => l.status === "active").length,
           fixedDepositsCount: fixedDeposits.filter((l) => l.status === "active").length,
