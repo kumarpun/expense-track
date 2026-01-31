@@ -390,8 +390,8 @@ export default function LedgerPage() {
                         <p className="text-xs text-gray-400 mt-1">{ledger.notes}</p>
                       )}
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
+                    <div className="flex items-center justify-between md:justify-end gap-4">
+                      <div className="text-left md:text-right">
                         <p
                           className={`text-lg font-bold ${
                             activeTab === "loan_given"
@@ -409,7 +409,7 @@ export default function LedgerPage() {
                           </p>
                         )}
                       </div>
-                      <div className="flex gap-1">
+                      <div className="flex gap-1 min-w-[88px] justify-end">
                         {ledger.status !== "completed" && (
                           <button
                             onClick={() => markAsCompleted(ledger)}
