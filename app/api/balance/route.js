@@ -19,33 +19,45 @@ export async function GET() {
     const savings = await Saving.find({ userId: session.userId });
     const expenses = await Expense.find({ userId: session.userId });
 
-    // Group deposits by title
+    // Group deposits by title (case-insensitive, trimmed)
     const sourceMap = {};
+    const displayNames = {};
 
     savings.forEach((saving) => {
-      const title = saving.title;
-      if (!sourceMap[title]) {
-        sourceMap[title] = { title, totalDeposits: 0, totalExpenses: 0 };
+      const key = saving.title.trim().toLowerCase();
+      if (!sourceMap[key]) {
+        sourceMap[key] = { totalDeposits: 0, totalExpenses: 0 };
+        displayNames[key] = saving.title.trim();
       }
-      sourceMap[title].totalDeposits += Number(saving.amount) || 0;
+      sourceMap[key].totalDeposits += Number(saving.amount) || 0;
     });
 
-    // Sum expenses by reason (payment method) for known sources
+    // Sum expenses by reason (payment method) for known sources (case-insensitive, trimmed)
     expenses.forEach((expense) => {
-      const reason = expense.reason;
-      if (sourceMap[reason]) {
-        sourceMap[reason].totalExpenses += Number(expense.amount) || 0;
+      const key = (expense.reason || "").trim().toLowerCase();
+      if (sourceMap[key]) {
+        sourceMap[key].totalExpenses += Number(expense.amount) || 0;
       }
     });
 
     // Convert to array and compute balance
-    const balances = Object.values(sourceMap).map((source) => ({
-      ...source,
-      balance: source.totalDeposits - source.totalExpenses,
+    const balances = Object.keys(sourceMap).map((key) => ({
+      title: displayNames[key],
+      totalDeposits: sourceMap[key].totalDeposits,
+      totalExpenses: sourceMap[key].totalExpenses,
+      balance: sourceMap[key].totalDeposits - sourceMap[key].totalExpenses,
     }));
 
-    // Unique source titles for expense dropdown
-    const sources = [...new Set(savings.map((s) => s.title))];
+    // Unique source titles for expense dropdown (deduplicated case-insensitively)
+    const seenKeys = new Set();
+    const sources = [];
+    savings.forEach((s) => {
+      const key = s.title.trim().toLowerCase();
+      if (!seenKeys.has(key)) {
+        seenKeys.add(key);
+        sources.push(s.title.trim());
+      }
+    });
 
     const grandTotalDeposits = balances.reduce((sum, b) => sum + b.totalDeposits, 0);
     const grandTotalExpenses = balances.reduce((sum, b) => sum + b.totalExpenses, 0);

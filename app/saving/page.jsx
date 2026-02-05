@@ -134,12 +134,13 @@ export default function SavingPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const trimmedData = { ...formData, title: formData.title.trim() };
     try {
       if (editingSaving) {
         const res = await fetch("/api/saving", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: editingSaving._id, ...formData }),
+          body: JSON.stringify({ id: editingSaving._id, ...trimmedData }),
         });
         if (res.ok) {
           closeModal();
@@ -149,7 +150,7 @@ export default function SavingPage() {
         const res = await fetch("/api/saving", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(trimmedData),
         });
         if (res.ok) {
           closeModal();
@@ -405,30 +406,46 @@ export default function SavingPage() {
                       {new Date(saving.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-gray-900">
-                      {saving.title}
+                      <div className="flex items-center gap-1.5">
+                        {saving.title}
+                        {saving.type === "transfer" && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                            Transfer
+                          </span>
+                        )}
+                      </div>
+                      {saving.note && (
+                        <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">{saving.note}</p>
+                      )}
                     </td>
-                    <td className="px-3 md:px-6 py-3 text-xs md:text-sm font-medium text-green-600 whitespace-nowrap">
-                      +रू {Number(saving.amount).toLocaleString()}
+                    <td className={`px-3 md:px-6 py-3 text-xs md:text-sm font-medium whitespace-nowrap ${
+                      Number(saving.amount) >= 0 ? "text-green-600" : "text-red-600"
+                    }`}>
+                      {Number(saving.amount) >= 0 ? "+" : ""}रू {Number(saving.amount).toLocaleString()}
                     </td>
                     <td className="px-3 md:px-6 py-3 text-right whitespace-nowrap">
-                      <button
-                        onClick={() => openEditModal(saving)}
-                        className="text-blue-600 hover:text-blue-800 p-1.5 hover:bg-blue-50 rounded"
-                        title="Edit"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={() => handleDeleteClick(saving._id)}
-                        className="text-red-600 hover:text-red-800 p-1.5 hover:bg-red-50 rounded ml-1"
-                        title="Delete"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
+                      {saving.type !== "transfer" && (
+                        <>
+                          <button
+                            onClick={() => openEditModal(saving)}
+                            className="text-blue-600 hover:text-blue-800 p-1.5 hover:bg-blue-50 rounded"
+                            title="Edit"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(saving._id)}
+                            className="text-red-600 hover:text-red-800 p-1.5 hover:bg-red-50 rounded ml-1"
+                            title="Delete"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))}

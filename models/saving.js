@@ -4,6 +4,13 @@ const savingSchema = new Schema(
   {
     title: String,
     amount: Number,
+    type: {
+      type: String,
+      default: "deposit",
+      enum: ["deposit", "transfer"],
+    },
+    note: String,
+    transferId: String,
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",

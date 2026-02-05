@@ -92,6 +92,11 @@ export default function Dashboard() {
   const [isStatsExpanded, setIsStatsExpanded] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, expenseId: null });
   const [paymentSources, setPaymentSources] = useState([]);
+  const [modalMode, setModalMode] = useState("expense");
+  const [transferData, setTransferData] = useState({ amount: "", from: "", to: "" });
+  const [transfers, setTransfers] = useState([]);
+  const [editingTransfer, setEditingTransfer] = useState(null);
+  const [deleteTransferConfirm, setDeleteTransferConfirm] = useState({ isOpen: false, transferId: null });
 
   const fetchPaymentSources = async () => {
     try {
@@ -119,9 +124,22 @@ export default function Dashboard() {
     }
   };
 
+  const fetchTransfers = async () => {
+    try {
+      const res = await fetch("/api/transfer");
+      const data = await res.json();
+      if (data.success) {
+        setTransfers(data.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch transfers:", error);
+    }
+  };
+
   useEffect(() => {
     fetchExpenses();
     fetchPaymentSources();
+    fetchTransfers();
   }, []);
 
   // Filter expenses based on selected filter
@@ -218,12 +236,16 @@ export default function Dashboard() {
 
   const openAddModal = () => {
     setEditingExpense(null);
+    setEditingTransfer(null);
+    setModalMode("expense");
     setFormData({ title: "", amount: "", reason: "" });
+    setTransferData({ amount: "", from: "", to: "" });
     setIsModalOpen(true);
   };
 
   const openEditModal = (expense) => {
     setEditingExpense(expense);
+    setEditingTransfer(null);
     setFormData({
       title: expense.title,
       amount: expense.amount,
@@ -232,20 +254,36 @@ export default function Dashboard() {
     setIsModalOpen(true);
   };
 
+  const openEditTransferModal = (transfer) => {
+    setEditingTransfer(transfer);
+    setEditingExpense(null);
+    setModalMode("transfer");
+    setTransferData({
+      amount: transfer.amount,
+      from: transfer.from,
+      to: transfer.to,
+    });
+    setIsModalOpen(true);
+  };
+
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingExpense(null);
+    setEditingTransfer(null);
+    setModalMode("expense");
     setFormData({ title: "", amount: "", reason: "" });
+    setTransferData({ amount: "", from: "", to: "" });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const trimmedData = { ...formData, title: formData.title.trim(), reason: formData.reason.trim() };
     try {
       if (editingExpense) {
         const res = await fetch("/api/expense", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: editingExpense._id, ...formData }),
+          body: JSON.stringify({ id: editingExpense._id, ...trimmedData }),
         });
         if (res.ok) {
           closeModal();
@@ -255,7 +293,7 @@ export default function Dashboard() {
         const res = await fetch("/api/expense", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(trimmedData),
         });
         if (res.ok) {
           closeModal();
@@ -264,6 +302,62 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error("Failed to save expense:", error);
+    }
+  };
+
+  const handleTransferSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingTransfer) {
+        const res = await fetch("/api/transfer", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            transferId: editingTransfer.transferId,
+            from: transferData.from.trim(),
+            to: transferData.to.trim(),
+            amount: transferData.amount,
+          }),
+        });
+        if (res.ok) {
+          closeModal();
+          fetchTransfers();
+          fetchPaymentSources();
+        }
+      } else {
+        const res = await fetch("/api/transfer", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            from: transferData.from.trim(),
+            to: transferData.to.trim(),
+            amount: transferData.amount,
+          }),
+        });
+        if (res.ok) {
+          closeModal();
+          fetchTransfers();
+          fetchPaymentSources();
+        }
+      }
+    } catch (error) {
+      console.error("Failed to save transfer:", error);
+    }
+  };
+
+  const handleDeleteTransferConfirm = async () => {
+    try {
+      const res = await fetch("/api/transfer", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transferId: deleteTransferConfirm.transferId }),
+      });
+      if (res.ok) {
+        fetchTransfers();
+        fetchPaymentSources();
+      }
+    } catch (error) {
+      console.error("Failed to delete transfer:", error);
     }
   };
 
@@ -567,6 +661,77 @@ export default function Dashboard() {
             </table>
           </div>
         )}
+
+        {/* Transfer List */}
+        {transfers.length > 0 && (
+          <div className="mt-6">
+            <h3 className="font-semibold text-gray-700 dark:text-gray-200 mb-3">Transfers</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 dark:bg-gray-700">
+                  <tr>
+                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Date
+                    </th>
+                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Detail
+                    </th>
+                    <th className="hidden md:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      To
+                    </th>
+                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Amount
+                    </th>
+                    <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {transfers.map((transfer) => (
+                    <tr key={transfer.transferId} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <td className="px-4 md:px-6 py-4 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                        {new Date(transfer.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 md:px-6 py-4 text-sm text-gray-900 dark:text-white">
+                        {transfer.from}
+                        <div className="md:hidden text-xs text-gray-400 mt-0.5">
+                          → {transfer.to}
+                        </div>
+                      </td>
+                      <td className="hidden md:table-cell px-6 py-4 text-sm text-gray-900 dark:text-white">
+                        {transfer.to}
+                      </td>
+                      <td className="px-4 md:px-6 py-4 text-sm text-blue-600 font-medium whitespace-nowrap">
+                        रू {Number(transfer.amount).toLocaleString()}
+                      </td>
+                      <td className="px-4 md:px-6 py-4 text-right whitespace-nowrap">
+                        <button
+                          onClick={() => openEditTransferModal(transfer)}
+                          className="text-blue-600 hover:text-blue-800 p-1.5 hover:bg-blue-50 rounded"
+                          title="Edit"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => setDeleteTransferConfirm({ isOpen: true, transferId: transfer.transferId })}
+                          className="text-red-600 hover:text-red-800 p-1.5 hover:bg-red-50 rounded ml-1"
+                          title="Delete"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
       {isModalOpen && (
@@ -574,7 +739,7 @@ export default function Dashboard() {
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-                {editingExpense ? "Edit Expense" : "Add Expense"}
+                {editingExpense ? "Edit Expense" : editingTransfer ? "Edit Transfer" : modalMode === "transfer" ? "Transfer" : "Add Expense"}
               </h2>
               <button
                 onClick={closeModal}
@@ -583,82 +748,192 @@ export default function Dashboard() {
                 ✕
               </button>
             </div>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                  Title
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                  placeholder="e.g., Groceries"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                  Amount
-                </label>
-                <input
-                  type="number"
-                  required
-                  value={formData.amount}
-                  onChange={(e) =>
-                    setFormData({ ...formData, amount: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                  placeholder="0.00"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                  Payment Method
-                </label>
-                <select
-                  required
-                  value={formData.reason}
-                  onChange={(e) =>
-                    setFormData({ ...formData, reason: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-black dark:text-white"
+
+            {/* Mode Pills - only show when adding new */}
+            {!editingExpense && !editingTransfer && (
+              <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1 mb-4">
+                <button
+                  type="button"
+                  onClick={() => setModalMode("expense")}
+                  className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
+                    modalMode === "expense"
+                      ? "bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm"
+                      : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                  }`}
                 >
-                  <option value="">Select payment method</option>
-                  {paymentSources.length > 0 ? (
-                    paymentSources.map((source) => (
+                  Expense
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModalMode("transfer")}
+                  className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
+                    modalMode === "transfer"
+                      ? "bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm"
+                      : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                  }`}
+                >
+                  Transfer
+                </button>
+              </div>
+            )}
+
+            {/* Expense Form */}
+            {modalMode === "expense" && (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    Title
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.title}
+                    onChange={(e) =>
+                      setFormData({ ...formData, title: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    placeholder="e.g., Groceries"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    Amount
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    value={formData.amount}
+                    onChange={(e) =>
+                      setFormData({ ...formData, amount: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    Payment Method
+                  </label>
+                  <select
+                    required
+                    value={formData.reason}
+                    onChange={(e) =>
+                      setFormData({ ...formData, reason: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-black dark:text-white"
+                  >
+                    <option value="">Select payment method</option>
+                    {paymentSources.length > 0 ? (
+                      paymentSources.map((source) => (
+                        <option key={source} value={source}>
+                          {source}
+                        </option>
+                      ))
+                    ) : (
+                      <>
+                        <option value="Cash">Cash</option>
+                        <option value="Bank">Bank</option>
+                        <option value="Khalti">Khalti</option>
+                        <option value="Esewa">Esewa</option>
+                      </>
+                    )}
+                  </select>
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    {editingExpense ? "Update" : "Add Expense"}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* Transfer Form */}
+            {modalMode === "transfer" && (
+              <form onSubmit={handleTransferSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    Amount
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    value={transferData.amount}
+                    onChange={(e) =>
+                      setTransferData({ ...transferData, amount: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    From
+                  </label>
+                  <select
+                    required
+                    value={transferData.from}
+                    onChange={(e) =>
+                      setTransferData({ ...transferData, from: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-black dark:text-white"
+                  >
+                    <option value="">Select source</option>
+                    {paymentSources.map((source) => (
                       <option key={source} value={source}>
                         {source}
                       </option>
-                    ))
-                  ) : (
-                    <>
-                      <option value="Cash">Cash</option>
-                      <option value="Bank">Bank</option>
-                      <option value="Khalti">Khalti</option>
-                      <option value="Esewa">Esewa</option>
-                    </>
-                  )}
-                </select>
-              </div>
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  {editingExpense ? "Update" : "Add Expense"}
-                </button>
-              </div>
-            </form>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    To
+                  </label>
+                  <select
+                    required
+                    value={transferData.to}
+                    onChange={(e) =>
+                      setTransferData({ ...transferData, to: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-black dark:text-white"
+                  >
+                    <option value="">Select destination</option>
+                    {paymentSources
+                      .filter((source) => source !== transferData.from)
+                      .map((source) => (
+                        <option key={source} value={source}>
+                          {source}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    {editingTransfer ? "Update" : "Transfer"}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}
@@ -669,6 +944,14 @@ export default function Dashboard() {
         onConfirm={handleDeleteConfirm}
         title="Delete Expense"
         message="Are you sure you want to delete this expense? This action cannot be undone."
+      />
+
+      <ConfirmModal
+        isOpen={deleteTransferConfirm.isOpen}
+        onClose={() => setDeleteTransferConfirm({ isOpen: false, transferId: null })}
+        onConfirm={handleDeleteTransferConfirm}
+        title="Delete Transfer"
+        message="Are you sure you want to delete this transfer? This action cannot be undone."
       />
     </div>
     </ProtectedRoute>
