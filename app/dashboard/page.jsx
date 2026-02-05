@@ -91,6 +91,19 @@ export default function Dashboard() {
   });
   const [isStatsExpanded, setIsStatsExpanded] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, expenseId: null });
+  const [paymentSources, setPaymentSources] = useState([]);
+
+  const fetchPaymentSources = async () => {
+    try {
+      const res = await fetch("/api/balance");
+      const data = await res.json();
+      if (data.success) {
+        setPaymentSources(data.sources);
+      }
+    } catch (error) {
+      console.error("Failed to fetch payment sources:", error);
+    }
+  };
 
   const fetchExpenses = async () => {
     try {
@@ -108,6 +121,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchExpenses();
+    fetchPaymentSources();
   }, []);
 
   // Filter expenses based on selected filter
@@ -610,13 +624,23 @@ export default function Dashboard() {
                   onChange={(e) =>
                     setFormData({ ...formData, reason: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-black dark:text-white"
                 >
                   <option value="">Select payment method</option>
-                  <option value="Cash">Cash</option>
-                  <option value="Bank">Bank</option>
-                  <option value="Khalti">Khalti</option>
-                  <option value="Esewa">Esewa</option>
+                  {paymentSources.length > 0 ? (
+                    paymentSources.map((source) => (
+                      <option key={source} value={source}>
+                        {source}
+                      </option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="Cash">Cash</option>
+                      <option value="Bank">Bank</option>
+                      <option value="Khalti">Khalti</option>
+                      <option value="Esewa">Esewa</option>
+                    </>
+                  )}
                 </select>
               </div>
               <div className="flex gap-3 pt-2">

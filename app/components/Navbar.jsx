@@ -43,7 +43,8 @@ export default function Navbar() {
 
   const navItems = [
     { href: "/dashboard", label: "Home" },
-    { href: "/saving", label: "Saving" },
+    { href: "/saving", label: "Deposit" },
+    { href: "/balance", label: "Balance" },
     { href: "/ledger", label: "Ledger" },
     { href: "/stats", label: "Stats" },
   ];
