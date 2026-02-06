@@ -11,6 +11,7 @@ export default function BalancePage() {
     balance: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [isStatsExpanded, setIsStatsExpanded] = useState(false);
 
   useEffect(() => {
     const fetchBalance = async () => {
@@ -41,8 +42,66 @@ export default function BalancePage() {
         suppressHydrationWarning
       >
         <div className="max-w-4xl mx-auto" suppressHydrationWarning>
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          {/* Summary Cards - Mobile View */}
+          <div className="md:hidden mb-6">
+            <div
+              className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 cursor-pointer"
+              onClick={() => setIsStatsExpanded(!isStatsExpanded)}
+            >
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Total Deposits
+                  </p>
+                  {isLoading ? (
+                    <div className="h-7 w-24 bg-gray-200 dark:bg-gray-700 animate-pulse rounded mt-1"></div>
+                  ) : (
+                    <p className="text-xl font-bold text-green-600">
+                      रू {grandTotals.deposits.toLocaleString()}
+                    </p>
+                  )}
+                </div>
+                <span className="text-gray-400 text-xl">
+                  {isStatsExpanded ? "▲" : "▼"}
+                </span>
+              </div>
+            </div>
+            {isStatsExpanded && (
+              <div className="grid grid-cols-2 gap-2 mt-4">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Total Expenses
+                  </p>
+                  {isLoading ? (
+                    <div className="h-7 w-20 bg-gray-200 dark:bg-gray-700 animate-pulse rounded mt-1"></div>
+                  ) : (
+                    <p className="text-xl font-bold text-red-600">
+                      रू {grandTotals.expenses.toLocaleString()}
+                    </p>
+                  )}
+                </div>
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Net Balance
+                  </p>
+                  {isLoading ? (
+                    <div className="h-7 w-20 bg-gray-200 dark:bg-gray-700 animate-pulse rounded mt-1"></div>
+                  ) : (
+                    <p
+                      className={`text-xl font-bold ${
+                        grandTotals.balance >= 0 ? "text-green-600" : "text-red-600"
+                      }`}
+                    >
+                      रू {grandTotals.balance.toLocaleString()}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Summary Cards - Desktop View */}
+          <div className="hidden md:grid grid-cols-3 gap-4 mb-6">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 Total Deposits

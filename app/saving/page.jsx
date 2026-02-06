@@ -190,7 +190,7 @@ export default function SavingPage() {
             onClick={openAddModal}
             className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
           >
-            + Add Saving
+            + Add Deposit
           </button>
         </div>
 
@@ -460,7 +460,7 @@ export default function SavingPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-                {editingSaving ? "Edit Saving" : "Add Saving"}
+                {editingSaving ? "Edit Saving" : "Add Deposit"}
               </h2>
               <button
                 onClick={closeModal}
@@ -512,7 +512,7 @@ export default function SavingPage() {
                   type="submit"
                   className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                 >
-                  {editingSaving ? "Update" : "Add Saving"}
+                  {editingSaving ? "Update" : "Add Deposit"}
                 </button>
               </div>
             </form>
