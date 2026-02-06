@@ -381,7 +381,7 @@ export default function SavingPage() {
             No savings yet. Start saving today!
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow overflow-x-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-x-auto">
             <table className="w-full min-w-[400px]">
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
@@ -399,13 +399,13 @@ export default function SavingPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {savings.map((saving) => (
-                  <tr key={saving._id} className="hover:bg-gray-50 dark:bg-gray-700">
+                  <tr key={saving._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                     <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
                       {new Date(saving.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-gray-900">
+                    <td className="px-3 md:px-6 py-3 text-xs md:text-sm text-gray-900 dark:text-white">
                       <div className="flex items-center gap-1.5">
                         {saving.title}
                         {saving.type === "transfer" && (
@@ -457,14 +457,14 @@ export default function SavingPage() {
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-400/30 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
                 {editingSaving ? "Edit Saving" : "Add Saving"}
               </h2>
               <button
                 onClick={closeModal}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 ✕
               </button>
@@ -481,7 +481,7 @@ export default function SavingPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, title: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-black"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-black dark:text-white"
                   placeholder="e.g., Salary, Bonus"
                 />
               </div>
@@ -496,7 +496,7 @@ export default function SavingPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, amount: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-black"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-black dark:text-white"
                   placeholder="0.00"
                 />
               </div>
@@ -504,7 +504,7 @@ export default function SavingPage() {
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:bg-gray-700 transition-colors"
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >
                   Cancel
                 </button>

@@ -97,6 +97,7 @@ export default function Dashboard() {
   const [transfers, setTransfers] = useState([]);
   const [editingTransfer, setEditingTransfer] = useState(null);
   const [deleteTransferConfirm, setDeleteTransferConfirm] = useState({ isOpen: false, transferId: null });
+  const [viewMode, setViewMode] = useState("expenses");
 
   const fetchPaymentSources = async () => {
     try {
@@ -190,6 +191,55 @@ export default function Dashboard() {
       return expenseDate >= startDate && expenseDate <= endDate;
     });
   }, [allExpenses, filter, customStartDate, customEndDate]);
+
+  // Filter transfers based on selected filter
+  const filteredTransfers = useMemo(() => {
+    if (!transfers.length) return [];
+
+    let startDate, endDate;
+
+    switch (filter) {
+      case "today":
+        startDate = getToday();
+        endDate = getEndOfDay(new Date());
+        break;
+      case "yesterday":
+        startDate = getYesterday();
+        endDate = getEndOfDay(getYesterday());
+        break;
+      case "thisWeek":
+        startDate = getThisWeekStart();
+        endDate = getThisWeekEnd();
+        break;
+      case "lastWeek":
+        startDate = getLastWeekStart();
+        endDate = getLastWeekEnd();
+        break;
+      case "thisMonth":
+        startDate = getThisMonthStart();
+        endDate = getThisMonthEnd();
+        break;
+      case "lastMonth":
+        startDate = getLastMonthStart();
+        endDate = getLastMonthEnd();
+        break;
+      case "custom":
+        if (customStartDate && customEndDate) {
+          startDate = new Date(customStartDate);
+          endDate = getEndOfDay(new Date(customEndDate));
+        } else {
+          return transfers;
+        }
+        break;
+      default:
+        return transfers;
+    }
+
+    return transfers.filter((transfer) => {
+      const transferDate = new Date(transfer.createdAt);
+      return transferDate >= startDate && transferDate <= endDate;
+    });
+  }, [transfers, filter, customStartDate, customEndDate]);
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -542,15 +592,41 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* View Mode Tabs */}
+        <div className="inline-flex bg-gray-100 dark:bg-gray-700 rounded-full p-0.5 mb-4">
+          <button
+            type="button"
+            onClick={() => setViewMode("expenses")}
+            className={`px-4 py-1.5 text-xs font-medium rounded-full transition-all ${
+              viewMode === "expenses"
+                ? "bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow"
+                : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+            }`}
+          >
+            Expenses
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("transfers")}
+            className={`px-4 py-1.5 text-xs font-medium rounded-full transition-all ${
+              viewMode === "transfers"
+                ? "bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow"
+                : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+            }`}
+          >
+            Transfers
+          </button>
+        </div>
+
         {/* Filter Dropdown */}
-        <div className="bg-white rounded-lg shadow p-4 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
           <div className="flex flex-wrap gap-4 items-center">
             <div>
               <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Filter</label>
               <select
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-black text-sm min-w-[150px]"
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-black dark:text-white text-sm min-w-[150px]"
               >
                 <option value="all">All</option>
                 <option value="today">Today</option>
@@ -572,7 +648,7 @@ export default function Dashboard() {
                     type="date"
                     value={customStartDate}
                     onChange={(e) => setCustomStartDate(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-black text-sm"
+                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-black dark:text-white text-sm"
                   />
                 </div>
                 <div>
@@ -583,7 +659,7 @@ export default function Dashboard() {
                     type="date"
                     value={customEndDate}
                     onChange={(e) => setCustomEndDate(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-black text-sm"
+                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-black dark:text-white text-sm"
                   />
                 </div>
               </>
@@ -592,145 +668,154 @@ export default function Dashboard() {
         </div>
 
         {/* Expense List */}
-        {isLoading ? (
-          <div className="text-center py-10 text-gray-500 dark:text-gray-400">Loading...</div>
-        ) : filteredExpenses.length === 0 ? (
-          <div className="text-center py-10 text-gray-500 dark:text-gray-400">
-            No expenses found for the selected filter.
-          </div>
-        ) : (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Title
-                  </th>
-                  <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Amount
-                  </th>
-                  <th className="hidden md:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Payment
-                  </th>
-                  <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {filteredExpenses.map((expense) => (
-                  <tr key={expense._id} className="hover:bg-gray-50">
-                    <td className="px-4 md:px-6 py-4 text-xs text-gray-500 dark:text-gray-400">
-                      {new Date(expense.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 md:px-6 py-4 text-sm text-gray-900 dark:text-white">
-                      {expense.title}
-                    </td>
-                    <td className="px-4 md:px-6 py-4 text-sm text-gray-900 dark:text-white">
-                      रू {expense.amount}
-                    </td>
-                    <td className="hidden md:table-cell px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                      {expense.reason}
-                    </td>
-                    <td className="px-4 md:px-6 py-4 text-right whitespace-nowrap">
-                      <button
-                        onClick={() => openEditModal(expense)}
-                        className="text-blue-600 hover:text-blue-800 p-1.5 hover:bg-blue-50 rounded"
-                        title="Edit"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={() => handleDeleteClick(expense._id)}
-                        className="text-red-600 hover:text-red-800 p-1.5 hover:bg-red-50 rounded ml-1"
-                        title="Delete"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        {viewMode === "expenses" && (
+          <>
+            {isLoading ? (
+              <div className="text-center py-10 text-gray-500 dark:text-gray-400">Loading...</div>
+            ) : filteredExpenses.length === 0 ? (
+              <div className="text-center py-10 text-gray-500 dark:text-gray-400">
+                No expenses found for the selected filter.
+              </div>
+            ) : (
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                      <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Date
+                      </th>
+                      <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Title
+                      </th>
+                      <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Amount
+                      </th>
+                      <th className="hidden md:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Payment
+                      </th>
+                      <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {filteredExpenses.map((expense) => (
+                      <tr key={expense._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <td className="px-4 md:px-6 py-4 text-xs text-gray-500 dark:text-gray-400">
+                          {new Date(expense.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 md:px-6 py-4 text-sm text-gray-900 dark:text-white">
+                          {expense.title}
+                        </td>
+                        <td className="px-4 md:px-6 py-4 text-sm text-gray-900 dark:text-white">
+                          रू {expense.amount}
+                        </td>
+                        <td className="hidden md:table-cell px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                          {expense.reason}
+                        </td>
+                        <td className="px-4 md:px-6 py-4 text-right whitespace-nowrap">
+                          <button
+                            onClick={() => openEditModal(expense)}
+                            className="text-blue-600 hover:text-blue-800 p-1.5 hover:bg-blue-50 rounded"
+                            title="Edit"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(expense._id)}
+                            className="text-red-600 hover:text-red-800 p-1.5 hover:bg-red-50 rounded ml-1"
+                            title="Delete"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
         )}
 
         {/* Transfer List */}
-        {transfers.length > 0 && (
-          <div className="mt-6">
-            <h3 className="font-semibold text-gray-700 dark:text-gray-200 mb-3">Transfers</h3>
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Detail
-                    </th>
-                    <th className="hidden md:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      To
-                    </th>
-                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Amount
-                    </th>
-                    <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {transfers.map((transfer) => (
-                    <tr key={transfer.transferId} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                      <td className="px-4 md:px-6 py-4 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                        {new Date(transfer.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="px-4 md:px-6 py-4 text-sm text-gray-900 dark:text-white">
-                        {transfer.from}
-                        <div className="md:hidden text-xs text-gray-400 mt-0.5">
-                          → {transfer.to}
-                        </div>
-                      </td>
-                      <td className="hidden md:table-cell px-6 py-4 text-sm text-gray-900 dark:text-white">
-                        {transfer.to}
-                      </td>
-                      <td className="px-4 md:px-6 py-4 text-sm text-blue-600 font-medium whitespace-nowrap">
-                        रू {Number(transfer.amount).toLocaleString()}
-                      </td>
-                      <td className="px-4 md:px-6 py-4 text-right whitespace-nowrap">
-                        <button
-                          onClick={() => openEditTransferModal(transfer)}
-                          className="text-blue-600 hover:text-blue-800 p-1.5 hover:bg-blue-50 rounded"
-                          title="Edit"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => setDeleteTransferConfirm({ isOpen: true, transferId: transfer.transferId })}
-                          className="text-red-600 hover:text-red-800 p-1.5 hover:bg-red-50 rounded ml-1"
-                          title="Delete"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </td>
+        {viewMode === "transfers" && (
+          <>
+            {filteredTransfers.length === 0 ? (
+              <div className="text-center py-10 text-gray-500 dark:text-gray-400">
+                No transfers found for the selected filter.
+              </div>
+            ) : (
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                      <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Date
+                      </th>
+                      <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        From
+                      </th>
+                      <th className="hidden md:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        To
+                      </th>
+                      <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Amount
+                      </th>
+                      <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Actions
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {filteredTransfers.map((transfer) => (
+                      <tr key={transfer.transferId} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <td className="px-4 md:px-6 py-4 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                          {new Date(transfer.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 md:px-6 py-4 text-sm text-gray-900 dark:text-white">
+                          {transfer.from}
+                          <div className="md:hidden text-xs text-gray-400 mt-0.5">
+                            → {transfer.to}
+                          </div>
+                        </td>
+                        <td className="hidden md:table-cell px-6 py-4 text-sm text-gray-900 dark:text-white">
+                          {transfer.to}
+                        </td>
+                        <td className="px-4 md:px-6 py-4 text-sm text-blue-600 font-medium whitespace-nowrap">
+                          रू {Number(transfer.amount).toLocaleString()}
+                        </td>
+                        <td className="px-4 md:px-6 py-4 text-right whitespace-nowrap">
+                          <button
+                            onClick={() => openEditTransferModal(transfer)}
+                            className="text-blue-600 hover:text-blue-800 p-1.5 hover:bg-blue-50 rounded"
+                            title="Edit"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => setDeleteTransferConfirm({ isOpen: true, transferId: transfer.transferId })}
+                            className="text-red-600 hover:text-red-800 p-1.5 hover:bg-red-50 rounded ml-1"
+                            title="Delete"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -791,7 +876,7 @@ export default function Dashboard() {
                     onChange={(e) =>
                       setFormData({ ...formData, title: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-black dark:text-white"
                     placeholder="e.g., Groceries"
                   />
                 </div>
@@ -806,7 +891,7 @@ export default function Dashboard() {
                     onChange={(e) =>
                       setFormData({ ...formData, amount: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-black dark:text-white"
                     placeholder="0.00"
                   />
                 </div>
@@ -843,7 +928,7 @@ export default function Dashboard() {
                   <button
                     type="button"
                     onClick={closeModal}
-                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 transition-colors"
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
                     Cancel
                   </button>
@@ -871,7 +956,7 @@ export default function Dashboard() {
                     onChange={(e) =>
                       setTransferData({ ...transferData, amount: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-black dark:text-white"
                     placeholder="0.00"
                   />
                 </div>
@@ -921,7 +1006,7 @@ export default function Dashboard() {
                   <button
                     type="button"
                     onClick={closeModal}
-                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 transition-colors"
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
                     Cancel
                   </button>
