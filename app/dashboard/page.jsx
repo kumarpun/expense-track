@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import ProtectedRoute from "../components/ProtectedRoute";
 import ConfirmModal from "../components/ConfirmModal";
+import { useToast } from "../components/Toast";
 
 // Helper functions for date calculations (week starts Sunday)
 const getToday = () => {
@@ -77,9 +78,11 @@ const getLastMonthEnd = () => {
 };
 
 export default function Dashboard() {
+  const { addToast } = useToast();
   const [allExpenses, setAllExpenses] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
   const [filter, setFilter] = useState("today");
   const [customStartDate, setCustomStartDate] = useState("");
@@ -327,6 +330,8 @@ export default function Dashboard() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSaving) return;
+    setIsSaving(true);
     const trimmedData = { ...formData, title: formData.title.trim(), reason: formData.reason.trim() };
     try {
       if (editingExpense) {
@@ -338,6 +343,9 @@ export default function Dashboard() {
         if (res.ok) {
           closeModal();
           fetchExpenses();
+          addToast("Expense updated successfully", "success");
+        } else {
+          addToast("Failed to update expense", "error");
         }
       } else {
         const res = await fetch("/api/expense", {
@@ -348,15 +356,23 @@ export default function Dashboard() {
         if (res.ok) {
           closeModal();
           fetchExpenses();
+          addToast("Expense added successfully", "success");
+        } else {
+          addToast("Failed to add expense", "error");
         }
       }
     } catch (error) {
       console.error("Failed to save expense:", error);
+      addToast("Failed to save expense", "error");
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleTransferSubmit = async (e) => {
     e.preventDefault();
+    if (isSaving) return;
+    setIsSaving(true);
     try {
       if (editingTransfer) {
         const res = await fetch("/api/transfer", {
@@ -373,6 +389,9 @@ export default function Dashboard() {
           closeModal();
           fetchTransfers();
           fetchPaymentSources();
+          addToast("Transfer updated successfully", "success");
+        } else {
+          addToast("Failed to update transfer", "error");
         }
       } else {
         const res = await fetch("/api/transfer", {
@@ -388,10 +407,16 @@ export default function Dashboard() {
           closeModal();
           fetchTransfers();
           fetchPaymentSources();
+          addToast("Transfer completed successfully", "success");
+        } else {
+          addToast("Failed to complete transfer", "error");
         }
       }
     } catch (error) {
       console.error("Failed to save transfer:", error);
+      addToast("Failed to save transfer", "error");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -405,9 +430,13 @@ export default function Dashboard() {
       if (res.ok) {
         fetchTransfers();
         fetchPaymentSources();
+        addToast("Transfer deleted successfully", "success");
+      } else {
+        addToast("Failed to delete transfer", "error");
       }
     } catch (error) {
       console.error("Failed to delete transfer:", error);
+      addToast("Failed to delete transfer", "error");
     }
   };
 
@@ -424,9 +453,13 @@ export default function Dashboard() {
       });
       if (res.ok) {
         fetchExpenses();
+        addToast("Expense deleted successfully", "success");
+      } else {
+        addToast("Failed to delete expense", "error");
       }
     } catch (error) {
       console.error("Failed to delete expense:", error);
+      addToast("Failed to delete expense", "error");
     }
   };
 
@@ -928,15 +961,25 @@ export default function Dashboard() {
                   <button
                     type="button"
                     onClick={closeModal}
-                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    disabled={isSaving}
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    disabled={isSaving}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    {editingExpense ? "Update" : "Add Expense"}
+                    {isSaving ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        Saving...
+                      </>
+                    ) : editingExpense ? "Update" : "Add Expense"}
                   </button>
                 </div>
               </form>
@@ -1006,15 +1049,25 @@ export default function Dashboard() {
                   <button
                     type="button"
                     onClick={closeModal}
-                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    disabled={isSaving}
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    disabled={isSaving}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    {editingTransfer ? "Update" : "Transfer"}
+                    {isSaving ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        Saving...
+                      </>
+                    ) : editingTransfer ? "Update" : "Transfer"}
                   </button>
                 </div>
               </form>
