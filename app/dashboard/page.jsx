@@ -244,36 +244,35 @@ export default function Dashboard() {
     });
   }, [transfers, filter, customStartDate, customEndDate]);
 
-  // Calculate stats
+  // Calculate stats in a single pass
   const stats = useMemo(() => {
-    const calculateTotal = (expenses) =>
-      expenses.reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0);
+    const todayStart = getToday();
+    const todayEnd = getEndOfDay(new Date());
+    const thisWeekStart = getThisWeekStart();
+    const thisWeekEnd = getThisWeekEnd();
+    const lastWeekStart = getLastWeekStart();
+    const lastWeekEnd = getLastWeekEnd();
+    const thisMonthStart = getThisMonthStart();
+    const thisMonthEnd = getThisMonthEnd();
+    const lastMonthStart = getLastMonthStart();
+    const lastMonthEnd = getLastMonthEnd();
 
-    const filterByDateRange = (start, end) =>
-      allExpenses.filter((expense) => {
-        const expenseDate = new Date(expense.createdAt);
-        return expenseDate >= start && expenseDate <= end;
-      });
+    let todayTotal = 0, thisWeekTotal = 0, lastWeekTotal = 0,
+        thisMonthTotal = 0, lastMonthTotal = 0;
 
-    const todayTotal = calculateTotal(
-      filterByDateRange(getToday(), getEndOfDay(new Date()))
-    );
-    const thisWeekTotal = calculateTotal(
-      filterByDateRange(getThisWeekStart(), getThisWeekEnd())
-    );
-    const lastWeekTotal = calculateTotal(
-      filterByDateRange(getLastWeekStart(), getLastWeekEnd())
-    );
-    const thisMonthTotal = calculateTotal(
-      filterByDateRange(getThisMonthStart(), getThisMonthEnd())
-    );
-    const lastMonthTotal = calculateTotal(
-      filterByDateRange(getLastMonthStart(), getLastMonthEnd())
-    );
-    const filteredTotal = calculateTotal(filteredExpenses);
+    for (const exp of allExpenses) {
+      const amt = Number(exp.amount) || 0;
+      const d = new Date(exp.createdAt);
+      if (d >= todayStart && d <= todayEnd) todayTotal += amt;
+      if (d >= thisWeekStart && d <= thisWeekEnd) thisWeekTotal += amt;
+      if (d >= lastWeekStart && d <= lastWeekEnd) lastWeekTotal += amt;
+      if (d >= thisMonthStart && d <= thisMonthEnd) thisMonthTotal += amt;
+      if (d >= lastMonthStart && d <= lastMonthEnd) lastMonthTotal += amt;
+    }
 
-    const weekDiff = thisWeekTotal - lastWeekTotal;
-    const monthDiff = thisMonthTotal - lastMonthTotal;
+    const filteredTotal = filteredExpenses.reduce(
+      (sum, exp) => sum + (Number(exp.amount) || 0), 0
+    );
 
     return {
       todayTotal,
@@ -282,8 +281,8 @@ export default function Dashboard() {
       thisMonthTotal,
       lastMonthTotal,
       filteredTotal,
-      weekDiff,
-      monthDiff,
+      weekDiff: thisWeekTotal - lastWeekTotal,
+      monthDiff: thisMonthTotal - lastMonthTotal,
     };
   }, [allExpenses, filteredExpenses]);
 

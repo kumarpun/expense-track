@@ -3,6 +3,7 @@ import Saving from "../../../models/saving";
 import Expense from "../../../models/expense";
 import { dbConnect } from "../dbConnect";
 import { getSession } from "../../../lib/auth";
+import mongoose from "mongoose";
 
 export async function GET() {
   try {
@@ -16,48 +17,46 @@ export async function GET() {
 
     await dbConnect();
 
-    const savings = await Saving.find({ userId: session.userId });
-    const expenses = await Expense.find({ userId: session.userId });
+    const userId = new mongoose.Types.ObjectId(session.userId);
 
-    // Group deposits by title (case-insensitive, trimmed)
-    const sourceMap = {};
-    const displayNames = {};
+    // Aggregate deposits by title (lowercase/trimmed) in the database
+    const [depositAgg, expenseAgg] = await Promise.all([
+      Saving.aggregate([
+        { $match: { userId } },
+        {
+          $group: {
+            _id: { $toLower: { $trim: { input: "$title" } } },
+            totalDeposits: { $sum: "$amount" },
+            displayName: { $first: { $trim: { input: "$title" } } },
+          },
+        },
+      ]),
+      Expense.aggregate([
+        { $match: { userId } },
+        {
+          $group: {
+            _id: { $toLower: { $trim: { input: { $ifNull: ["$reason", ""] } } } },
+            totalExpenses: { $sum: "$amount" },
+          },
+        },
+      ]),
+    ]);
 
-    savings.forEach((saving) => {
-      const key = saving.title.trim().toLowerCase();
-      if (!sourceMap[key]) {
-        sourceMap[key] = { totalDeposits: 0, totalExpenses: 0 };
-        displayNames[key] = saving.title.trim();
-      }
-      sourceMap[key].totalDeposits += Number(saving.amount) || 0;
+    // Build expense lookup map
+    const expenseMap = {};
+    expenseAgg.forEach((e) => {
+      expenseMap[e._id] = e.totalExpenses;
     });
 
-    // Sum expenses by reason (payment method) for known sources (case-insensitive, trimmed)
-    expenses.forEach((expense) => {
-      const key = (expense.reason || "").trim().toLowerCase();
-      if (sourceMap[key]) {
-        sourceMap[key].totalExpenses += Number(expense.amount) || 0;
-      }
-    });
-
-    // Convert to array and compute balance
-    const balances = Object.keys(sourceMap).map((key) => ({
-      title: displayNames[key],
-      totalDeposits: sourceMap[key].totalDeposits,
-      totalExpenses: sourceMap[key].totalExpenses,
-      balance: sourceMap[key].totalDeposits - sourceMap[key].totalExpenses,
+    // Combine into balances
+    const balances = depositAgg.map((d) => ({
+      title: d.displayName,
+      totalDeposits: d.totalDeposits,
+      totalExpenses: expenseMap[d._id] || 0,
+      balance: d.totalDeposits - (expenseMap[d._id] || 0),
     }));
 
-    // Unique source titles for expense dropdown (deduplicated case-insensitively)
-    const seenKeys = new Set();
-    const sources = [];
-    savings.forEach((s) => {
-      const key = s.title.trim().toLowerCase();
-      if (!seenKeys.has(key)) {
-        seenKeys.add(key);
-        sources.push(s.title.trim());
-      }
-    });
+    const sources = depositAgg.map((d) => d.displayName);
 
     const grandTotalDeposits = balances.reduce((sum, b) => sum + b.totalDeposits, 0);
     const grandTotalExpenses = balances.reduce((sum, b) => sum + b.totalExpenses, 0);

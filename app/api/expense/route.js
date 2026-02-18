@@ -26,7 +26,7 @@ export async function GET(request) {
       };
     }
 
-    const expenses = await Expense.find(query).sort({ createdAt: -1 });
+    const expenses = await Expense.find(query).sort({ createdAt: -1 }).lean();
     return NextResponse.json({ success: true, data: expenses }, { status: 200 });
   } catch (error) {
     return NextResponse.json(

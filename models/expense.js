@@ -16,6 +16,9 @@ const expenseSchema = new Schema(
   }
 );
 
+expenseSchema.index({ userId: 1, createdAt: -1 });
+expenseSchema.index({ userId: 1, reason: 1 });
+
 const Expense =
   mongoose.models.Expense || mongoose.model("Expense", expenseSchema);
 

@@ -22,6 +22,10 @@ const savingSchema = new Schema(
   }
 );
 
+savingSchema.index({ userId: 1, createdAt: -1 });
+savingSchema.index({ userId: 1, type: 1 });
+savingSchema.index({ userId: 1, transferId: 1 });
+
 const Saving =
   mongoose.models.Saving || mongoose.model("Saving", savingSchema);
 

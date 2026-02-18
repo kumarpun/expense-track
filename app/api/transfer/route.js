@@ -16,36 +16,76 @@ export async function GET() {
 
     await dbConnect();
 
-    const transfers = await Saving.find({
-      userId: session.userId,
-      type: "transfer",
-      transferId: { $exists: true, $ne: null },
-    }).sort({ createdAt: -1 });
+    const userId = new mongoose.Types.ObjectId(session.userId);
 
-    // Group by transferId
-    const grouped = {};
-    transfers.forEach((t) => {
-      if (!grouped[t.transferId]) {
-        grouped[t.transferId] = [];
-      }
-      grouped[t.transferId].push(t);
-    });
-
-    // Build transfer list
-    const data = Object.entries(grouped)
-      .map(([transferId, entries]) => {
-        const fromEntry = entries.find((e) => Number(e.amount) < 0);
-        const toEntry = entries.find((e) => Number(e.amount) > 0);
-        if (!fromEntry || !toEntry) return null;
-        return {
-          transferId,
-          from: fromEntry.title,
-          to: toEntry.title,
-          amount: Math.abs(Number(fromEntry.amount)),
-          createdAt: fromEntry.createdAt,
-        };
-      })
-      .filter(Boolean);
+    const data = await Saving.aggregate([
+      {
+        $match: {
+          userId,
+          type: "transfer",
+          transferId: { $exists: true, $ne: null },
+        },
+      },
+      { $sort: { createdAt: -1 } },
+      {
+        $group: {
+          _id: "$transferId",
+          entries: {
+            $push: { title: "$title", amount: "$amount", createdAt: "$createdAt" },
+          },
+        },
+      },
+      {
+        $project: {
+          transferId: "$_id",
+          _id: 0,
+          from: {
+            $let: {
+              vars: {
+                entry: {
+                  $arrayElemAt: [
+                    { $filter: { input: "$entries", cond: { $lt: ["$$this.amount", 0] } } },
+                    0,
+                  ],
+                },
+              },
+              in: "$$entry.title",
+            },
+          },
+          to: {
+            $let: {
+              vars: {
+                entry: {
+                  $arrayElemAt: [
+                    { $filter: { input: "$entries", cond: { $gt: ["$$this.amount", 0] } } },
+                    0,
+                  ],
+                },
+              },
+              in: "$$entry.title",
+            },
+          },
+          amount: {
+            $abs: {
+              $let: {
+                vars: {
+                  entry: {
+                    $arrayElemAt: [
+                      { $filter: { input: "$entries", cond: { $lt: ["$$this.amount", 0] } } },
+                      0,
+                    ],
+                  },
+                },
+                in: "$$entry.amount",
+              },
+            },
+          },
+          createdAt: { $arrayElemAt: ["$entries.createdAt", 0] },
+        },
+      },
+      { $match: { from: { $ne: null }, to: { $ne: null } } },
+      { $sort: { createdAt: -1 } },
+    ]);
 
     return NextResponse.json({ success: true, data }, { status: 200 });
   } catch (error) {
@@ -183,17 +223,18 @@ export async function PUT(request) {
       );
     }
 
-    await Saving.findByIdAndUpdate(fromEntry._id, {
-      title: from.trim(),
-      amount: -Number(amount),
-      note: `Transfer to ${to.trim()}`,
-    });
-
-    await Saving.findByIdAndUpdate(toEntry._id, {
-      title: to.trim(),
-      amount: Number(amount),
-      note: `Transfer from ${from.trim()}`,
-    });
+    await Promise.all([
+      Saving.findByIdAndUpdate(fromEntry._id, {
+        title: from.trim(),
+        amount: -Number(amount),
+        note: `Transfer to ${to.trim()}`,
+      }),
+      Saving.findByIdAndUpdate(toEntry._id, {
+        title: to.trim(),
+        amount: Number(amount),
+        note: `Transfer from ${from.trim()}`,
+      }),
+    ]);
 
     return NextResponse.json(
       { success: true, message: "Transfer updated" },

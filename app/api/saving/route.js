@@ -16,7 +16,7 @@ export async function GET() {
     await dbConnect();
     const savings = await Saving.find({ userId: session.userId }).sort({
       createdAt: -1,
-    });
+    }).lean();
     const total = savings.reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
     return NextResponse.json(
       { success: true, data: savings, total },

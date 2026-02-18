@@ -51,6 +51,9 @@ const ledgerSchema = new Schema(
   }
 );
 
+ledgerSchema.index({ userId: 1, type: 1, createdAt: -1 });
+ledgerSchema.index({ userId: 1, status: 1 });
+
 const Ledger =
   mongoose.models.Ledger || mongoose.model("Ledger", ledgerSchema);
 

@@ -23,48 +23,48 @@ export async function GET(request) {
       query.type = type;
     }
 
-    const ledgers = await Ledger.find(query).sort({ createdAt: -1 });
+    const [ledgers, categories] = await Promise.all([
+      Ledger.find(query).sort({ createdAt: -1 }).lean(),
+      LedgerCategory.find({ userId: session.userId }).sort({ order: 1 }).lean(),
+    ]);
 
-    // Get user's categories
-    const categories = await LedgerCategory.find({ userId: session.userId }).sort({
-      order: 1,
-    });
-
-    // Calculate stats per category dynamically
+    // Single-pass: calculate stats per category and backward-compat stats
     const categoryStats = {};
-    for (const category of categories) {
-      const categoryLedgers = ledgers.filter((l) => l.type === category.slug);
-      const activeLedgers = categoryLedgers.filter((l) => l.status === "active");
-      categoryStats[category.slug] = {
-        total: activeLedgers.reduce((sum, l) => sum + (l.amount - l.paidAmount), 0),
-        count: activeLedgers.length,
-      };
+    const categorySlugs = new Set(categories.map((c) => c.slug));
+    for (const slug of categorySlugs) {
+      categoryStats[slug] = { total: 0, count: 0 };
     }
+    const oldStats = {
+      totalLoansGiven: 0, totalLoansTaken: 0, totalFixedDeposits: 0,
+      loansGivenCount: 0, loansTakenCount: 0, fixedDepositsCount: 0,
+    };
 
-    // Backward compatibility - also calculate old stats
-    const loansGiven = ledgers.filter((l) => l.type === "loan_given");
-    const loansTaken = ledgers.filter((l) => l.type === "loan_taken");
-    const fixedDeposits = ledgers.filter((l) => l.type === "fixed_deposit");
+    for (const l of ledgers) {
+      const isActive = l.status === "active";
+      if (isActive && categoryStats[l.type]) {
+        categoryStats[l.type].total += l.amount - (l.paidAmount || 0);
+        categoryStats[l.type].count++;
+      }
+      if (isActive) {
+        if (l.type === "loan_given") {
+          oldStats.totalLoansGiven += l.amount - (l.paidAmount || 0);
+          oldStats.loansGivenCount++;
+        } else if (l.type === "loan_taken") {
+          oldStats.totalLoansTaken += l.amount - (l.paidAmount || 0);
+          oldStats.loansTakenCount++;
+        } else if (l.type === "fixed_deposit") {
+          oldStats.totalFixedDeposits += l.amount;
+          oldStats.fixedDepositsCount++;
+        }
+      }
+    }
 
     return NextResponse.json(
       {
         success: true,
         data: ledgers,
         categoryStats,
-        stats: {
-          totalLoansGiven: loansGiven
-            .filter((l) => l.status === "active")
-            .reduce((sum, l) => sum + (l.amount - l.paidAmount), 0),
-          totalLoansTaken: loansTaken
-            .filter((l) => l.status === "active")
-            .reduce((sum, l) => sum + (l.amount - l.paidAmount), 0),
-          totalFixedDeposits: fixedDeposits
-            .filter((l) => l.status === "active")
-            .reduce((sum, l) => sum + l.amount, 0),
-          loansGivenCount: loansGiven.filter((l) => l.status === "active").length,
-          loansTakenCount: loansTaken.filter((l) => l.status === "active").length,
-          fixedDepositsCount: fixedDeposits.filter((l) => l.status === "active").length,
-        },
+        stats: oldStats,
       },
       { status: 200 }
     );
