@@ -504,9 +504,14 @@ export default function LedgerPage() {
                           रू {ledger.amount.toLocaleString()}
                         </p>
                         {ledger.paidAmount > 0 && ledger.paidAmount < ledger.amount && (
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Paid: रू {ledger.paidAmount.toLocaleString()}
-                          </p>
+                          <>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              Paid: रू {ledger.paidAmount.toLocaleString()}
+                            </p>
+                            <p className="text-xs text-orange-500 dark:text-orange-400 font-medium">
+                              Remaining: रू {(ledger.amount - ledger.paidAmount).toLocaleString()}
+                            </p>
+                          </>
                         )}
                       </div>
                       <div className="flex gap-1 min-w-[110px] justify-end">
