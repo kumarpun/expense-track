@@ -25,6 +25,12 @@ export default function LedgerPage() {
   const [activeTab, setActiveTab] = useState("");
   const [isStatsExpanded, setIsStatsExpanded] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, ledgerId: null });
+  const [expandedLedger, setExpandedLedger] = useState(null);
+  const [payments, setPayments] = useState({});
+  const [loadingPayments, setLoadingPayments] = useState({});
+  const [paymentFormOpen, setPaymentFormOpen] = useState(null);
+  const [paymentFormData, setPaymentFormData] = useState({ amount: "", note: "", paymentDate: "" });
+  const [deletePaymentConfirm, setDeletePaymentConfirm] = useState({ isOpen: false, paymentId: null, ledgerId: null });
   const [formData, setFormData] = useState({
     type: "",
     title: "",
@@ -181,6 +187,75 @@ export default function LedgerPage() {
       }
     } catch (error) {
       console.error("Failed to update:", error);
+    }
+  };
+
+  // Payment functions
+  const fetchPayments = async (ledgerId) => {
+    setLoadingPayments((prev) => ({ ...prev, [ledgerId]: true }));
+    try {
+      const res = await fetch(`/api/ledger-payment?ledgerId=${ledgerId}`);
+      const data = await res.json();
+      if (data.success) {
+        setPayments((prev) => ({ ...prev, [ledgerId]: data.data }));
+      }
+    } catch (error) {
+      console.error("Failed to fetch payments:", error);
+    } finally {
+      setLoadingPayments((prev) => ({ ...prev, [ledgerId]: false }));
+    }
+  };
+
+  const toggleExpand = (ledgerId) => {
+    if (expandedLedger === ledgerId) {
+      setExpandedLedger(null);
+    } else {
+      setExpandedLedger(ledgerId);
+      if (!payments[ledgerId]) {
+        fetchPayments(ledgerId);
+      }
+    }
+  };
+
+  const handleAddPayment = async (ledgerId) => {
+    if (!paymentFormData.amount || Number(paymentFormData.amount) <= 0) return;
+    try {
+      const res = await fetch("/api/ledger-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ledgerId,
+          amount: Number(paymentFormData.amount),
+          note: paymentFormData.note || undefined,
+          paymentDate: paymentFormData.paymentDate || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchPayments(ledgerId);
+        fetchLedgers();
+        setPaymentFormOpen(null);
+        setPaymentFormData({ amount: "", note: "", paymentDate: "" });
+      }
+    } catch (error) {
+      console.error("Failed to add payment:", error);
+    }
+  };
+
+  const handleDeletePayment = async () => {
+    const { paymentId, ledgerId } = deletePaymentConfirm;
+    try {
+      const res = await fetch("/api/ledger-payment", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: paymentId }),
+      });
+      if (res.ok) {
+        fetchPayments(ledgerId);
+        fetchLedgers();
+      }
+    } catch (error) {
+      console.error("Failed to delete payment:", error);
     }
   };
 
@@ -434,7 +509,25 @@ export default function LedgerPage() {
                           </p>
                         )}
                       </div>
-                      <div className="flex gap-1 min-w-[88px] justify-end">
+                      <div className="flex gap-1 min-w-[110px] justify-end">
+                        {ledger.status !== "completed" && (
+                          <button
+                            onClick={() => {
+                              if (paymentFormOpen === ledger._id) {
+                                setPaymentFormOpen(null);
+                              } else {
+                                setPaymentFormOpen(ledger._id);
+                                if (expandedLedger !== ledger._id) toggleExpand(ledger._id);
+                              }
+                            }}
+                            className="text-emerald-600 hover:text-emerald-800 p-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded"
+                            title="Add Payment"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                          </button>
+                        )}
                         {ledger.status !== "completed" && (
                           <button
                             onClick={() => markAsCompleted(ledger)}
@@ -467,6 +560,131 @@ export default function LedgerPage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Payment history toggle */}
+                  {(ledger.paidAmount > 0 || ledger.paymentCount > 0) && (
+                    <button
+                      onClick={() => toggleExpand(ledger._id)}
+                      className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 mt-2 flex items-center gap-1"
+                    >
+                      {expandedLedger === ledger._id ? "Hide" : "Show"} Payment History
+                      {ledger.paymentCount > 0 && ` (${ledger.paymentCount})`}
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className={`h-3 w-3 transition-transform ${expandedLedger === ledger._id ? "rotate-180" : ""}`}
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  )}
+
+                  {/* Expanded payment section */}
+                  {expandedLedger === ledger._id && (
+                    <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                      {/* Add Payment inline form */}
+                      {paymentFormOpen === ledger._id && (
+                        <div className="mb-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <input
+                              type="number"
+                              placeholder="Amount"
+                              value={paymentFormData.amount}
+                              onChange={(e) => setPaymentFormData({ ...paymentFormData, amount: e.target.value })}
+                              className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-black dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Note (optional)"
+                              value={paymentFormData.note}
+                              onChange={(e) => setPaymentFormData({ ...paymentFormData, note: e.target.value })}
+                              className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-black dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            />
+                            <input
+                              type="date"
+                              value={paymentFormData.paymentDate}
+                              onChange={(e) => setPaymentFormData({ ...paymentFormData, paymentDate: e.target.value })}
+                              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-black dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            />
+                            <button
+                              onClick={() => handleAddPayment(ledger._id)}
+                              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm transition-colors"
+                            >
+                              Add
+                            </button>
+                          </div>
+                          <p className="text-xs text-gray-400 mt-1.5">
+                            Remaining: रू {(ledger.amount - ledger.paidAmount).toLocaleString()}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Payment timeline */}
+                      {loadingPayments[ledger._id] ? (
+                        <p className="text-sm text-gray-400 py-2">Loading payments...</p>
+                      ) : (payments[ledger._id] || []).length === 0 ? (
+                        <p className="text-sm text-gray-400 py-2">No payment records yet.</p>
+                      ) : (
+                        <div className="space-y-1">
+                          {(payments[ledger._id] || []).map((payment) => (
+                            <div
+                              key={payment._id}
+                              className="flex items-center justify-between text-sm py-1.5 px-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0" />
+                                <div>
+                                  <span className="font-medium text-gray-800 dark:text-gray-200">
+                                    रू {payment.amount.toLocaleString()}
+                                  </span>
+                                  {payment.note && (
+                                    <span className="text-gray-400 ml-2">- {payment.note}</span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-gray-400">
+                                  {new Date(payment.paymentDate).toLocaleDateString()}
+                                </span>
+                                <button
+                                  onClick={() =>
+                                    setDeletePaymentConfirm({
+                                      isOpen: true,
+                                      paymentId: payment._id,
+                                      ledgerId: ledger._id,
+                                    })
+                                  }
+                                  className="text-red-400 hover:text-red-600 p-1"
+                                  title="Delete payment"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Progress bar */}
+                      {ledger.amount > 0 && (
+                        <div className="mt-3">
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                            <div
+                              className="bg-emerald-500 h-1.5 rounded-full transition-all"
+                              style={{ width: `${Math.min(100, (ledger.paidAmount / ledger.amount) * 100)}%` }}
+                            />
+                          </div>
+                          <p className="text-xs text-gray-400 mt-1">
+                            {((ledger.paidAmount / ledger.amount) * 100).toFixed(0)}% paid
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -542,33 +760,41 @@ export default function LedgerPage() {
                 </div>
 
                 {editingLedger && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                        Status
-                      </label>
-                      <select
-                        value={formData.status}
-                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-black dark:text-white"
-                      >
-                        <option value="active">Active</option>
-                        <option value="partial">Partial</option>
-                        <option value="completed">Completed</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                        Paid Amount
-                      </label>
-                      <input
-                        type="number"
-                        value={formData.paidAmount}
-                        onChange={(e) => setFormData({ ...formData, paidAmount: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-black dark:text-white"
-                        placeholder="0"
-                      />
-                    </div>
+                  <div>
+                    {editingLedger.paymentCount > 0 ? (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
+                        Paid amount and status are managed through payment records ({editingLedger.paymentCount} payments). Use the "+" button on the card to add payments.
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                            Status
+                          </label>
+                          <select
+                            value={formData.status}
+                            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-black dark:text-white"
+                          >
+                            <option value="active">Active</option>
+                            <option value="partial">Partial</option>
+                            <option value="completed">Completed</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                            Paid Amount
+                          </label>
+                          <input
+                            type="number"
+                            value={formData.paidAmount}
+                            onChange={(e) => setFormData({ ...formData, paidAmount: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-black dark:text-white"
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -731,6 +957,14 @@ export default function LedgerPage() {
           onConfirm={handleDeleteCategoryConfirm}
           title="Delete Category"
           message="Are you sure you want to delete this category? You can only delete categories with no entries."
+        />
+
+        <ConfirmModal
+          isOpen={deletePaymentConfirm.isOpen}
+          onClose={() => setDeletePaymentConfirm({ isOpen: false, paymentId: null, ledgerId: null })}
+          onConfirm={handleDeletePayment}
+          title="Delete Payment"
+          message="Are you sure you want to delete this payment record? The paid amount will be recalculated."
         />
       </div>
     </ProtectedRoute>

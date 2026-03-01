@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import Ledger from "../../../models/ledger";
 import LedgerCategory from "../../../models/ledgerCategory";
+import LedgerPayment from "../../../models/ledgerPayment";
 import { dbConnect } from "../dbConnect";
 import { getSession } from "../../../lib/auth";
 
@@ -27,6 +29,26 @@ export async function GET(request) {
       Ledger.find(query).sort({ createdAt: -1 }).lean(),
       LedgerCategory.find({ userId: session.userId }).sort({ order: 1 }).lean(),
     ]);
+
+    // Attach paymentCount to each ledger
+    if (ledgers.length > 0) {
+      const paymentCounts = await LedgerPayment.aggregate([
+        {
+          $match: {
+            ledgerId: { $in: ledgers.map((l) => l._id) },
+            userId: new mongoose.Types.ObjectId(session.userId),
+          },
+        },
+        { $group: { _id: "$ledgerId", count: { $sum: 1 } } },
+      ]);
+      const countMap = {};
+      for (const pc of paymentCounts) {
+        countMap[pc._id.toString()] = pc.count;
+      }
+      for (const l of ledgers) {
+        l.paymentCount = countMap[l._id.toString()] || 0;
+      }
+    }
 
     // Single-pass: calculate stats per category and backward-compat stats
     const categoryStats = {};
@@ -118,6 +140,15 @@ export async function PUT(request) {
     const { id, ...updateData } = await request.json();
     await dbConnect();
 
+    // If payment records exist, don't allow manual paidAmount/status changes
+    if (updateData.paidAmount !== undefined || updateData.status !== undefined) {
+      const paymentCount = await LedgerPayment.countDocuments({ ledgerId: id });
+      if (paymentCount > 0) {
+        delete updateData.paidAmount;
+        delete updateData.status;
+      }
+    }
+
     const ledger = await Ledger.findOneAndUpdate(
       { _id: id, userId: session.userId },
       updateData,
@@ -165,6 +196,9 @@ export async function DELETE(request) {
         { status: 404 }
       );
     }
+
+    // Cascade delete associated payments
+    await LedgerPayment.deleteMany({ ledgerId: id, userId: session.userId });
 
     return NextResponse.json(
       { success: true, message: "Ledger entry deleted" },

@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { login, user, loading } = useAuth();
   const router = useRouter();
 
@@ -75,14 +76,32 @@ export default function LoginPage() {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
               Password
             </label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-black dark:text-white"
-              placeholder="Enter your password"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-black dark:text-white"
+                placeholder="Enter your password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                {showPassword ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3.53 2.47a.75.75 0 00-1.06 1.06l18 18a.75.75 0 101.06-1.06l-18-18zM22.676 12.553a11.249 11.249 0 01-2.631 3.807l-1.486-1.486a9.75 9.75 0 002.014-2.874.748.748 0 000-.553A9.753 9.753 0 0012 4.5c-1.17 0-2.293.206-3.332.586L7.084 3.502a11.205 11.205 0 014.916-1.13c5.09 0 9.396 3.443 10.676 8.128a.75.75 0 010 .553zM15.75 12c0 .18-.013.357-.04.53l-4.24-4.24A3.75 3.75 0 0115.75 12zM12.53 15.71l-4.24-4.24A3.75 3.75 0 0012.53 15.71zM6.75 12c0-.18.013-.357.04-.53l-1.594-1.594A11.27 11.27 0 001.324 12c1.28 4.685 5.586 8.128 10.676 8.128a11.21 11.21 0 003.583-.59l-1.584-1.584A3.756 3.756 0 016.75 12z" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
 
           <button
