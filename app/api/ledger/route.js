@@ -62,12 +62,12 @@ export async function GET(request) {
     };
 
     for (const l of ledgers) {
-      const isActive = l.status === "active";
-      if (isActive && categoryStats[l.type]) {
+      const hasRemaining = l.status === "active" || l.status === "partial";
+      if (hasRemaining && categoryStats[l.type]) {
         categoryStats[l.type].total += l.amount - (l.paidAmount || 0);
         categoryStats[l.type].count++;
       }
-      if (isActive) {
+      if (hasRemaining) {
         if (l.type === "loan_given") {
           oldStats.totalLoansGiven += l.amount - (l.paidAmount || 0);
           oldStats.loansGivenCount++;
